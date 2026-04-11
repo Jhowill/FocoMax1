@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "FocoMax",
+    "slug": "focomax",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0B1020"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.focomax.app"
+    },
+    "android": {
+      "package": "com.focomax.app"
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-notifications",
+      "expo-asset"
+    ]
+  }
+}
