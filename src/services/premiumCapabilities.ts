@@ -9,32 +9,44 @@ export type PremiumFeatureKey =
   | "advanced_exports"
   | "premium_themes"
   | "premium_challenges"
-  | "smart_planning";
+  | "smart_planning"
+  | "weekly_plan"
+  | "long_term_trends"
+  | "premium_visual_finishing"
+  | "auto_backup_pro";
 
 export type PremiumCapabilities = Record<PremiumFeatureKey, boolean>;
 
 export const PREMIUM_FEATURE_LABELS: Record<PremiumFeatureKey, string> = {
-  remove_ads: "Remoção total de anúncios",
-  full_coach: "Coach completo com recomendações avançadas",
-  advanced_behavior: "Análises de comportamento com correlações completas",
-  unlimited_focus_history: "Histórico ilimitado de sessões",
-  advanced_reports: "Relatórios avançados de desempenho",
-  advanced_exports: "Exportação avançada (JSON + CSV)",
-  premium_themes: "Temas e personalização premium",
+  remove_ads: "Remocao total de anuncios",
+  full_coach: "Coach completo com recomendacoes avancadas",
+  advanced_behavior: "Analises de comportamento com correlacoes completas",
+  unlimited_focus_history: "Historico ilimitado de sessoes",
+  advanced_reports: "Relatorios avancados de desempenho",
+  advanced_exports: "Exportacao avancada (JSON + CSV)",
+  premium_themes: "Temas e personalizacao premium",
   premium_challenges: "Desafios premium adaptativos",
-  smart_planning: "Planejamento inteligente com auto-ajustes"
+  smart_planning: "Planejamento inteligente com auto-ajustes",
+  weekly_plan: "Plano semanal personalizado",
+  long_term_trends: "Tendencias comparativas de longo prazo",
+  premium_visual_finishing: "Acabamento visual premium e microinteracoes",
+  auto_backup_pro: "Backup automatico premium com controle de intervalo"
 };
 
 export const PREMIUM_FEATURE_DESCRIPTIONS: Record<PremiumFeatureKey, string> = {
-  remove_ads: "Sem interrupções de anúncio em toda a experiência.",
-  full_coach: "Mais recomendações simultâneas, priorização e histórico de utilidade.",
-  advanced_behavior: "Visões detalhadas de horários, gatilhos e relação energia-humor-produtividade.",
-  unlimited_focus_history: "Acesso completo ao histórico para comparação e revisão.",
-  advanced_reports: "Resumos avançados por período com leitura orientada a ação.",
-  advanced_exports: "Exportação de dados estruturada para análise externa.",
-  premium_themes: "Aparência premium e refinamentos visuais exclusivos.",
-  premium_challenges: "Missões com ajuste dinâmico ao seu ritmo real.",
-  smart_planning: "Sugestões automáticas de blocos e rotina para o dia/semana."
+  remove_ads: "Sem interrupcoes de anuncio em toda a experiencia.",
+  full_coach: "Mais recomendacoes simultaneas, priorizacao e historico de utilidade.",
+  advanced_behavior: "Visoes detalhadas de horarios, gatilhos e relacao energia-humor-produtividade.",
+  unlimited_focus_history: "Acesso completo ao historico para comparacao e revisao.",
+  advanced_reports: "Resumos avancados por periodo com leitura orientada a acao.",
+  advanced_exports: "Exportacao de dados estruturada para analise externa.",
+  premium_themes: "Aparencia premium e refinamentos visuais exclusivos.",
+  premium_challenges: "Missoes com ajuste dinamico ao seu ritmo real.",
+  smart_planning: "Sugestoes automaticas de blocos e rotina para o dia/semana.",
+  weekly_plan: "Plano semanal com foco, tarefas e habitos sugeridos.",
+  long_term_trends: "Comparativos mensal x mensal e tendencia de consistencia.",
+  premium_visual_finishing: "Interface premium com feedbacks visuais e experiencia superior.",
+  auto_backup_pro: "Backup automatico local com intervalo configuravel."
 };
 
 export function getPremiumCapabilities(state: PremiumState): PremiumCapabilities {
@@ -50,7 +62,11 @@ export function getPremiumCapabilities(state: PremiumState): PremiumCapabilities
     advanced_exports: premiumOn,
     premium_themes: premiumOn,
     premium_challenges: premiumOn,
-    smart_planning: premiumOn
+    smart_planning: premiumOn,
+    weekly_plan: premiumOn,
+    long_term_trends: premiumOn,
+    premium_visual_finishing: premiumOn,
+    auto_backup_pro: premiumOn
   };
 }
 

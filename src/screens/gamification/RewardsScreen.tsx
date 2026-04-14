@@ -12,7 +12,7 @@ export function RewardsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [premium, setPremium] = useState(false);
-  const [rewards, setRewards] = useState<Array<{ id: string; nome: string; tipo: string; desbloqueada: number; premium: number }>>([]);
+  const [rewards, setRewards] = useState<{ id: string; nome: string; tipo: string; desbloqueada: number; premium: number }[]>([]);
 
   const load = async () => {
     try {
@@ -21,7 +21,7 @@ export function RewardsScreen() {
       setRewards(summary.rewards);
       setPremium(Boolean(sub.premium_active));
       setError("");
-    } catch (err) {
+    } catch {
       setError("Erro ao carregar recompensas.");
     } finally {
       setLoading(false);

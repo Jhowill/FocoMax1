@@ -20,17 +20,17 @@ export async function getDb() {
 
 export async function run(sql: string, params: unknown[] = []) {
   const db = await getDb();
-  return db.runAsync(sql, params);
+  return db.runAsync(sql, params as SQLite.SQLiteBindParams);
 }
 
 export async function getAll<T>(sql: string, params: unknown[] = []) {
   const db = await getDb();
-  return db.getAllAsync<T>(sql, params);
+  return db.getAllAsync<T>(sql, params as SQLite.SQLiteBindParams);
 }
 
 export async function getFirst<T>(sql: string, params: unknown[] = []) {
   const db = await getDb();
-  return db.getFirstAsync<T>(sql, params);
+  return db.getFirstAsync<T>(sql, params as SQLite.SQLiteBindParams);
 }
 
 export async function insert(table: string, data: RowData) {

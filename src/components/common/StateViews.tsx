@@ -5,6 +5,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { AppButton } from "@/components/common/AppButton";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing } from "@/theme/spacing";
+import { elevation, radius } from "@/theme/shape";
+import { typography } from "@/theme/typography";
 
 export function LoadingState({ message = "Carregando..." }: { message?: string }) {
   const { colors } = useTheme();
@@ -18,7 +20,7 @@ export function LoadingState({ message = "Carregando..." }: { message?: string }
 
 export function EmptyState({
   title = "Sem dados",
-  description = "Adicione seu primeiro registro para começar.",
+  description = "Adicione seu primeiro registro para comecar.",
   actionText,
   onAction
 }: {
@@ -58,19 +60,20 @@ export function ErrorState({
 
 const styles = StyleSheet.create({
   container: {
-    borderWidth: 1,
-    borderRadius: 20,
+    borderWidth: 1.2,
+    borderRadius: radius.xl,
     padding: spacing.lg,
-    gap: spacing.sm,
+    gap: spacing.md,
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+    ...elevation.sm
   },
   title: {
-    fontSize: 16,
-    fontWeight: "700"
+    ...typography.h4,
+    textAlign: "center"
   },
   text: {
-    fontSize: 14,
+    ...typography.body,
     textAlign: "center"
   }
 });

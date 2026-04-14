@@ -1,16 +1,18 @@
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
+import { AdBanner } from "@/components/common/AdBanner";
 import { AppButton } from "@/components/common/AppButton";
 import { AppCard } from "@/components/common/AppCard";
 import { AppInput } from "@/components/common/AppInput";
-import { AdBanner } from "@/components/common/AdBanner";
 import { ErrorState, LoadingState } from "@/components/common/StateViews";
 import { getFirst } from "@/db/database";
 import { useRootNavigation } from "@/navigation/hooks";
 import { createAreaLife, createCategory, listAreasLife, listCategories } from "@/services/catalogService";
+import { getPlanningAssistant, replanOverdueTasks } from "@/services/taskService";
 import { useTheme } from "@/theme/ThemeProvider";
+import { typography } from "@/theme/typography";
 
 export function PlanningHomeScreen() {
   const { colors } = useTheme();
@@ -24,22 +26,24 @@ export function PlanningHomeScreen() {
     areas: 0,
     categorias: 0
   });
-  const [areas, setAreas] = useState<Array<{ id: string; nome: string }>>([]);
-  const [categories, setCategories] = useState<Array<{ id: string; nome: string }>>([]);
+  const [areas, setAreas] = useState<{ id: string; nome: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; nome: string }[]>([]);
+  const [assistant, setAssistant] = useState<Awaited<ReturnType<typeof getPlanningAssistant>>>();
   const [newArea, setNewArea] = useState("");
   const [newCategory, setNewCategory] = useState("");
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [tarefas, metas, habitos, areasCount, categoriasCount, areaRows, categoryRows] = await Promise.all([
+      const [tarefas, metas, habitos, areasCount, categoriasCount, areaRows, categoryRows, assistantData] = await Promise.all([
         getFirst<{ total: number }>("SELECT COUNT(*) as total FROM tarefas WHERE is_archived = 0"),
         getFirst<{ total: number }>("SELECT COUNT(*) as total FROM metas WHERE is_archived = 0"),
         getFirst<{ total: number }>("SELECT COUNT(*) as total FROM habitos WHERE is_archived = 0"),
         getFirst<{ total: number }>("SELECT COUNT(*) as total FROM areas_vida WHERE is_archived = 0"),
         getFirst<{ total: number }>("SELECT COUNT(*) as total FROM categorias"),
         listAreasLife(),
-        listCategories()
+        listCategories(),
+        getPlanningAssistant()
       ]);
       setCounts({
         tarefas: tarefas?.total ?? 0,
@@ -50,9 +54,10 @@ export function PlanningHomeScreen() {
       });
       setAreas(areaRows);
       setCategories(categoryRows);
+      setAssistant(assistantData);
       setError("");
-    } catch (err) {
-      setError("Não foi possível carregar seu planejamento.");
+    } catch {
+      setError("Nao foi possivel carregar seu planejamento.");
     } finally {
       setLoading(false);
     }
@@ -73,20 +78,20 @@ export function PlanningHomeScreen() {
 
   return (
     <View style={styles.container}>
-      <AppCard>
-        <Text style={[styles.title, { color: colors.text }]}>Planejamento diário</Text>
-        <Text style={{ color: colors.mutedText, fontSize: 13 }}>
-          Organize tarefas, metas e hábitos com filtros, histórico e edição total.
+      <AppCard tone="premium">
+        <Text style={[styles.title, { color: colors.text }]}>Planejamento diario</Text>
+        <Text style={[styles.body, { color: colors.mutedText }]}>
+          Organize tarefas, metas e habitos com filtros, historico e edicao total.
         </Text>
       </AppCard>
 
       <AppCard>
-        <Text style={[styles.title, { color: colors.text }]}>Visão rápida</Text>
-        <Text style={{ color: colors.text }}>Tarefas ativas: {counts.tarefas}</Text>
-        <Text style={{ color: colors.text }}>Metas: {counts.metas}</Text>
-        <Text style={{ color: colors.text }}>Hábitos: {counts.habitos}</Text>
-        <Text style={{ color: colors.text }}>Áreas da vida: {counts.areas}</Text>
-        <Text style={{ color: colors.text }}>Categorias: {counts.categorias}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Visao rapida</Text>
+        <Text style={[styles.body, { color: colors.text }]}>Tarefas ativas: {counts.tarefas}</Text>
+        <Text style={[styles.body, { color: colors.text }]}>Metas: {counts.metas}</Text>
+        <Text style={[styles.body, { color: colors.text }]}>Habitos: {counts.habitos}</Text>
+        <Text style={[styles.body, { color: colors.text }]}>Areas da vida: {counts.areas}</Text>
+        <Text style={[styles.body, { color: colors.text }]}>Categorias: {counts.categorias}</Text>
       </AppCard>
 
       <AppCard>
@@ -94,15 +99,45 @@ export function PlanningHomeScreen() {
         <View style={styles.actions}>
           <AppButton title="Tarefas" onPress={() => navigation.navigate("Tasks")} />
           <AppButton title="Metas" onPress={() => navigation.navigate("Goals")} variant="secondary" />
-          <AppButton title="Hábitos" onPress={() => navigation.navigate("Habits")} variant="secondary" />
+          <AppButton title="Habitos" onPress={() => navigation.navigate("Habits")} variant="secondary" />
         </View>
       </AppCard>
 
+      {assistant ? (
+        <AppCard tone="soft">
+          <Text style={[styles.title, { color: colors.text }]}>Priorizador automatico</Text>
+          <Text style={[styles.caption, { color: colors.mutedText }]}>
+            Janela recomendada para tarefas exigentes: {assistant.suggestedWindow}
+          </Text>
+          <Text style={[styles.caption, { color: colors.text }]}>{assistant.energyGuidance}</Text>
+          {assistant.criticalTasks.length === 0 ? (
+            <Text style={[styles.caption, { color: colors.mutedText }]}>Sem tarefas criticas no momento.</Text>
+          ) : (
+            assistant.criticalTasks.map((task) => (
+              <Text key={task.id} style={[styles.caption, { color: colors.text }]}>
+                - {task.titulo} (criticidade {task.criticidade})
+              </Text>
+            ))
+          )}
+          {assistant.overdueCount > 0 ? (
+            <AppButton
+              title={`Reagendar ${Math.min(assistant.overdueCount, 3)} atrasada(s)`}
+              onPress={async () => {
+                const result = await replanOverdueTasks(1, 3);
+                Alert.alert("Reagendamento aplicado", `${result.moved} tarefa(s) movidas para ${result.targetDate}.`);
+                await load();
+              }}
+              variant="secondary"
+            />
+          ) : null}
+        </AppCard>
+      ) : null}
+
       <AppCard>
-        <Text style={[styles.title, { color: colors.text }]}>Áreas da vida</Text>
-        <AppInput label="Nova área" value={newArea} onChangeText={setNewArea} placeholder="Ex.: Saúde" />
+        <Text style={[styles.title, { color: colors.text }]}>Areas da vida</Text>
+        <AppInput label="Nova area" value={newArea} onChangeText={setNewArea} placeholder="Ex.: Saude" />
         <AppButton
-          title="Adicionar área"
+          title="Adicionar area"
           onPress={async () => {
             if (!newArea.trim()) {
               return;
@@ -114,8 +149,8 @@ export function PlanningHomeScreen() {
           variant="secondary"
         />
         {areas.map((area) => (
-          <Text key={area.id} style={{ color: colors.text, fontSize: 12 }}>
-            • {area.nome}
+          <Text key={area.id} style={[styles.caption, { color: colors.text }]}>
+            - {area.nome}
           </Text>
         ))}
       </AppCard>
@@ -136,8 +171,8 @@ export function PlanningHomeScreen() {
           variant="secondary"
         />
         {categories.slice(0, 8).map((category) => (
-          <Text key={category.id} style={{ color: colors.text, fontSize: 12 }}>
-            • {category.nome}
+          <Text key={category.id} style={[styles.caption, { color: colors.text }]}>
+            - {category.nome}
           </Text>
         ))}
       </AppCard>
@@ -150,14 +185,19 @@ export function PlanningHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 12,
-    paddingBottom: 16
+    gap: 16,
+    paddingBottom: 20
   },
   title: {
-    fontSize: 16,
-    fontWeight: "800"
+    ...typography.h4
+  },
+  body: {
+    ...typography.body
+  },
+  caption: {
+    ...typography.small
   },
   actions: {
-    gap: 8
+    gap: 10
   }
 });

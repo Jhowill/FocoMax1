@@ -1,10 +1,12 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
 
-import { OnboardingLayout } from "@/screens/onboarding/OnboardingLayout";
+import { AppCard } from "@/components/common/AppCard";
 import { RootStackParamList } from "@/navigation/types";
+import { OnboardingLayout } from "@/screens/onboarding/OnboardingLayout";
 import { useTheme } from "@/theme/ThemeProvider";
+import { typography } from "@/theme/typography";
 
 type Props = NativeStackScreenProps<RootStackParamList, "OnboardingWelcome">;
 
@@ -13,35 +15,30 @@ export function WelcomeScreen({ navigation }: Props) {
   return (
     <OnboardingLayout
       title="Bem-vindo ao FocoMax"
-      subtitle="Planeje melhor, execute com foco e acompanhe sua evolução diária com clareza."
-      nextLabel="Começar"
+      subtitle="Planeje melhor, execute com foco e acompanhe sua evolucao diaria com clareza."
+      nextLabel="Comecar"
       onNext={() => navigation.navigate("OnboardingGoal")}
       secondaryLabel="Pular"
       onSecondary={() => navigation.navigate("OnboardingFinish")}
     >
-      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.card }]}>
+      <AppCard tone="premium" style={styles.card}>
         <Text style={[styles.title, { color: colors.text }]}>Fluxo mestre</Text>
         <Text style={[styles.text, { color: colors.mutedText }]}>
-          Planejar → Executar foco → Registrar progresso → Analisar desempenho → Ajustar rotina → Manter consistência.
+          Planejar e executar foco, registrar progresso, analisar desempenho, ajustar rotina e manter consistencia.
         </Text>
-      </View>
+      </AppCard>
     </OnboardingLayout>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderWidth: 1,
-    borderRadius: 18,
-    padding: 16,
     gap: 8
   },
   title: {
-    fontSize: 16,
-    fontWeight: "800"
+    ...typography.h4
   },
   text: {
-    fontSize: 14,
-    lineHeight: 20
+    ...typography.body
   }
 });

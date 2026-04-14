@@ -225,6 +225,140 @@ export async function removeTask(taskId: string) {
   await logAction("tarefas", taskId, "excluir");
 }
 
+export async function listOverdueTasks(limit = 10) {
+  const userId = await getCurrentUserId();
+  return getAll<Task>(
+    `
+    SELECT *
+    FROM tarefas
+    WHERE usuario_id = ?
+      AND is_archived = 0
+      AND status <> 'concluida'
+      AND data_prevista IS NOT NULL
+      AND date(data_prevista) < date(?)
+    ORDER BY prioridade DESC, date(data_prevista) ASC
+    LIMIT ?
+    `,
+    [userId, toDateKey(new Date()), limit]
+  );
+}
+
+export async function replanOverdueTasks(daysAhead = 1, limit = 3) {
+  const now = nowIso();
+  const targetDate = toDateKey(new Date(Date.now() + Math.max(daysAhead, 1) * 86400000));
+  const overdue = await listOverdueTasks(limit);
+
+  for (const task of overdue) {
+    await updateById("tarefas", task.id, {
+      data_prevista: targetDate,
+      status: task.status === "concluida" ? "concluida" : "pendente",
+      updated_at: now
+    });
+    await logAction("tarefas", task.id, "replanejar", {
+      from: task.data_prevista,
+      to: targetDate
+    });
+  }
+
+  return {
+    moved: overdue.length,
+    targetDate,
+    tasks: overdue
+  };
+}
+
+export async function listCriticalTasks(limit = 5) {
+  const userId = await getCurrentUserId();
+  return getAll<Task & { criticidade: number }>(
+    `
+    SELECT
+      t.*,
+      (
+        (CASE WHEN date(t.data_prevista) < date(?) THEN 4 ELSE 0 END) +
+        (CASE WHEN date(t.data_prevista) = date(?) THEN 2 ELSE 0 END) +
+        (CASE WHEN t.prioridade >= 4 THEN 2 WHEN t.prioridade = 3 THEN 1 ELSE 0 END)
+      ) as criticidade
+    FROM tarefas t
+    WHERE t.usuario_id = ?
+      AND t.is_archived = 0
+      AND t.status <> 'concluida'
+    ORDER BY criticidade DESC, t.prioridade DESC, date(t.data_prevista) ASC
+    LIMIT ?
+    `,
+    [toDateKey(new Date()), toDateKey(new Date()), userId, limit]
+  );
+}
+
+export async function getPlanningAssistant() {
+  const userId = await getCurrentUserId();
+  const [criticalTasks, overdue, bestHour, energyVsOutput] = await Promise.all([
+    listCriticalTasks(3),
+    getFirst<{ total: number }>(
+      `
+      SELECT COUNT(*) as total
+      FROM tarefas
+      WHERE usuario_id = ?
+        AND is_archived = 0
+        AND status <> 'concluida'
+        AND data_prevista IS NOT NULL
+        AND date(data_prevista) < date(?)
+      `,
+      [userId, toDateKey(new Date())]
+    ),
+    getFirst<{ hora: string; media_foco: number; total: number }>(
+      `
+      SELECT
+        strftime('%H', started_at) as hora,
+        AVG(COALESCE(foco_nivel, 3)) as media_foco,
+        COUNT(*) as total
+      FROM sessoes_foco
+      WHERE usuario_id = ? AND status = 'concluida'
+      GROUP BY strftime('%H', started_at)
+      HAVING COUNT(*) >= 2
+      ORDER BY media_foco DESC, total DESC
+      LIMIT 1
+      `,
+      [userId]
+    ),
+    getAll<{ energia: number; tarefas_medias: number }>(
+      `
+      SELECT
+        he.energia as energia,
+        AVG(COALESCE(ed.tarefas_concluidas, 0)) as tarefas_medias
+      FROM humor_energia he
+      LEFT JOIN estatisticas_diarias ed
+        ON ed.usuario_id = he.usuario_id
+        AND date(ed.data_ref) = date(he.data_ref)
+      WHERE he.usuario_id = ?
+      GROUP BY he.energia
+      ORDER BY he.energia ASC
+      `,
+      [userId]
+    )
+  ]);
+
+  const lowEnergyAvg =
+    energyVsOutput.filter((row) => row.energia <= 2).reduce((sum, row) => sum + (row.tarefas_medias ?? 0), 0) /
+    Math.max(energyVsOutput.filter((row) => row.energia <= 2).length, 1);
+  const highEnergyAvg =
+    energyVsOutput.filter((row) => row.energia >= 4).reduce((sum, row) => sum + (row.tarefas_medias ?? 0), 0) /
+    Math.max(energyVsOutput.filter((row) => row.energia >= 4).length, 1);
+
+  let energyGuidance = "Mantenha tarefas curtas quando a energia estiver baixa e reserve blocos longos para picos de energia.";
+  if (highEnergyAvg - lowEnergyAvg >= 1) {
+    energyGuidance = "Seu rendimento aumenta com energia alta. Agende tarefas longas para seus melhores horarios.";
+  }
+
+  const suggestedWindow = bestHour?.hora ? `${bestHour.hora}:00 - ${bestHour.hora}:59` : "Ainda sem janela ideal detectada";
+
+  return {
+    criticalTasks,
+    overdueCount: overdue?.total ?? 0,
+    suggestedWindow,
+    energyGuidance
+  };
+}
+
 async function replaceSubtasks(taskId: string, subtasks: string[]) {
   await run("DELETE FROM subtarefas WHERE tarefa_id = ?", [taskId]);
   const now = nowIso();

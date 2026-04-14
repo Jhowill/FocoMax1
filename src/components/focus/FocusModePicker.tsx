@@ -4,13 +4,15 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { FocusMode } from "@/models/types";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing } from "@/theme/spacing";
+import { radius } from "@/theme/shape";
+import { typography } from "@/theme/typography";
 
-const options: Array<{ value: FocusMode; label: string; min: number }> = [
-  { value: "pomodoro_classico", label: "Pomodoro clássico", min: 25 },
+const options: { value: FocusMode; label: string; min: number }[] = [
+  { value: "pomodoro_classico", label: "Pomodoro classico", min: 25 },
   { value: "pomodoro_custom", label: "Pomodoro customizado", min: 35 },
   { value: "foco_livre", label: "Foco livre", min: 45 },
   { value: "foco_blocos", label: "Foco em blocos", min: 50 },
-  { value: "sessao_rapida", label: "Sessão rápida", min: 15 }
+  { value: "sessao_rapida", label: "Sessao rapida", min: 15 }
 ];
 
 export function FocusModePicker({
@@ -32,13 +34,13 @@ export function FocusModePicker({
               styles.option,
               {
                 borderColor: active ? colors.primary : colors.border,
-                backgroundColor: active ? colors.primarySoft : colors.card
+                backgroundColor: active ? colors.primarySoft : colors.inputBackground
               }
             ]}
             onPress={() => onSelect(option.value, option.min)}
           >
-            <Text style={{ color: colors.text, fontWeight: "700", fontSize: 13 }}>{option.label}</Text>
-            <Text style={{ color: colors.mutedText, fontSize: 12 }}>{option.min} min sugerido</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{option.label}</Text>
+            <Text style={[styles.meta, { color: colors.mutedText }]}>{option.min} min sugerido</Text>
           </Pressable>
         );
       })}
@@ -48,12 +50,19 @@ export function FocusModePicker({
 
 const styles = StyleSheet.create({
   container: {
-    gap: spacing.xs
+    gap: spacing.sm
   },
   option: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: spacing.sm,
-    gap: 2
+    borderWidth: 1.2,
+    borderRadius: radius.lg,
+    padding: spacing.mdPlus,
+    gap: 4
+  },
+  title: {
+    ...typography.small,
+    fontWeight: "700"
+  },
+  meta: {
+    ...typography.caption
   }
 });

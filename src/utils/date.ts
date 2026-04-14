@@ -1,5 +1,18 @@
 export const nowIso = () => new Date().toISOString();
 
+export const getGreetingByHour = (dateLike: string | Date = new Date()) => {
+  const date = typeof dateLike === "string" ? new Date(dateLike) : dateLike;
+  const hour = date.getHours();
+
+  if (hour >= 5 && hour < 12) {
+    return "Bom dia";
+  }
+  if (hour >= 12 && hour < 18) {
+    return "Boa tarde";
+  }
+  return "Boa noite";
+};
+
 export const toDateKey = (dateLike: string | Date) => {
   const date = typeof dateLike === "string" ? new Date(dateLike) : dateLike;
   const year = date.getFullYear();

@@ -1,5 +1,3 @@
-import { NavigationProp, useNavigation } from "@react-navigation/native";
+import { useCompatNavigation } from "@/navigation/expoAdapter";
 
-import { RootStackParamList } from "@/navigation/types";
-
-export const useRootNavigation = () => useNavigation<NavigationProp<RootStackParamList>>();
+export const useRootNavigation = () => useCompatNavigation();

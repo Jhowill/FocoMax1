@@ -8,6 +8,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/common/StateV
 import { useRootNavigation } from "@/navigation/hooks";
 import { listFocusSessions } from "@/services/focusService";
 import { useTheme } from "@/theme/ThemeProvider";
+import { typography } from "@/theme/typography";
 import { formatDuration, formatPtDateTime } from "@/utils/date";
 
 export function FocusHomeScreen() {
@@ -22,8 +23,8 @@ export function FocusHomeScreen() {
       setLoading(true);
       setSessions(await listFocusSessions(6));
       setError("");
-    } catch (err) {
-      setError("Falha ao carregar sessões de foco.");
+    } catch {
+      setError("Falha ao carregar sessoes de foco.");
     } finally {
       setLoading(false);
     }
@@ -44,37 +45,37 @@ export function FocusHomeScreen() {
 
   return (
     <View style={styles.container}>
-      <AppCard>
-        <Text style={[styles.title, { color: colors.text }]}>Execução de foco</Text>
-        <Text style={{ color: colors.mutedText, fontSize: 13 }}>
-          Inicie sessões Pomodoro, foco livre ou blocos profundos sem distrações.
+      <AppCard tone="premium">
+        <Text style={[styles.title, { color: colors.text }]}>Execucao de foco</Text>
+        <Text style={[styles.body, { color: colors.mutedText }]}>
+          Inicie sessoes Pomodoro, foco livre ou blocos profundos sem distracoes.
         </Text>
-        <AppButton title="Abrir sessão de foco" onPress={() => navigation.navigate("FocusSession")} />
+        <AppButton title="Abrir sessao de foco" onPress={() => navigation.navigate("FocusSession")} />
       </AppCard>
 
       <AppCard>
-        <Text style={[styles.title, { color: colors.text }]}>Ações</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Acoes</Text>
         <View style={styles.row}>
-          <AppButton title="Histórico" onPress={() => navigation.navigate("FocusHistory")} variant="secondary" />
+          <AppButton title="Historico" onPress={() => navigation.navigate("FocusHistory")} variant="secondary" />
           <AppButton title="Coach de foco" onPress={() => navigation.navigate("Coach")} variant="secondary" />
         </View>
       </AppCard>
 
-      <AppCard>
-        <Text style={[styles.title, { color: colors.text }]}>Últimas sessões</Text>
+      <AppCard tone="soft">
+        <Text style={[styles.title, { color: colors.text }]}>Ultimas sessoes</Text>
         {sessions.length === 0 ? (
           <EmptyState
-            title="Sem sessões ainda"
-            description="Inicie sua primeira sessão para começar a análise."
+            title="Sem sessoes ainda"
+            description="Inicie sua primeira sessao para comecar a analise."
             actionText="Iniciar foco"
             onAction={() => navigation.navigate("FocusSession")}
           />
         ) : (
           sessions.map((session) => (
             <View key={session.id} style={styles.item}>
-              <Text style={{ color: colors.text, fontSize: 13, fontWeight: "700" }}>{session.modo.replaceAll("_", " ")}</Text>
-              <Text style={{ color: colors.mutedText, fontSize: 12 }}>
-                {formatPtDateTime(session.started_at)} • {formatDuration(Math.round(session.duracao_real_segundos / 60))} • {session.status}
+              <Text style={[styles.itemTitle, { color: colors.text }]}>{session.modo.replaceAll("_", " ")}</Text>
+              <Text style={[styles.itemMeta, { color: colors.mutedText }]}>
+                {formatPtDateTime(session.started_at)} | {formatDuration(Math.round(session.duracao_real_segundos / 60))} | {session.status}
               </Text>
             </View>
           ))
@@ -87,19 +88,28 @@ export function FocusHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 12,
-    paddingBottom: 18
+    gap: 16,
+    paddingBottom: 20
   },
   title: {
-    fontSize: 16,
-    fontWeight: "800"
+    ...typography.h4
+  },
+  body: {
+    ...typography.body
   },
   row: {
     flexDirection: "row",
-    gap: 8
+    gap: 10
   },
   item: {
-    gap: 2,
-    paddingVertical: 4
+    gap: 4,
+    paddingVertical: 6
+  },
+  itemTitle: {
+    ...typography.small,
+    fontWeight: "700"
+  },
+  itemMeta: {
+    ...typography.caption
   }
 });

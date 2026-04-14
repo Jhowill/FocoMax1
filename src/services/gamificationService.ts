@@ -1,6 +1,6 @@
 import { getAll, getCurrentUserId, getFirst, insert, updateById } from "@/db/database";
 import { addXp } from "@/services/statsService";
-import { nowIso } from "@/utils/date";
+import { nowIso, toDateKey } from "@/utils/date";
 import { uid } from "@/utils/id";
 
 export async function getGamificationSummary() {
@@ -65,7 +65,7 @@ export async function evaluateAchievements() {
   const completedTasks = checks[1]?.total ?? 0;
   const focusStreak = checks[2]?.atual ?? 0;
 
-  const unlocks: Array<{ key: string; name: string; description: string; xpBonus: number }> = [];
+  const unlocks: { key: string; name: string; description: string; xpBonus: number }[] = [];
 
   if (completedSessions >= 10) {
     unlocks.push({
@@ -144,4 +144,135 @@ async function unlockRewardsByRules() {
       updated_at: now
     });
   }
+}
+
+type ChallengeItem = {
+  id: string;
+  title: string;
+  progress: number;
+  target: number;
+  xp: number;
+  period: "diario" | "semanal";
+  premium: boolean;
+  stage: number;
+};
+
+export async function getStructuredChallenges(isPremium: boolean) {
+  const userId = await getCurrentUserId();
+  const today = toDateKey(new Date());
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const weekStart = toDateKey(new Date(now.getTime() + mondayOffset * 86400000));
+
+  const [daily, weekly] = await Promise.all([
+    getFirst<{ foco_min: number; tarefas_concluidas: number; habitos_concluidos: number }>(
+      `
+      SELECT foco_min, tarefas_concluidas, habitos_concluidos
+      FROM estatisticas_diarias
+      WHERE usuario_id = ? AND data_ref = ?
+      LIMIT 1
+      `,
+      [userId, today]
+    ),
+    getFirst<{ foco_min: number; tarefas_concluidas: number; habitos_concluidos: number; sessoes_concluidas: number }>(
+      `
+      SELECT
+        SUM(COALESCE(foco_min, 0)) as foco_min,
+        SUM(COALESCE(tarefas_concluidas, 0)) as tarefas_concluidas,
+        SUM(COALESCE(habitos_concluidos, 0)) as habitos_concluidos,
+        SUM(COALESCE(sessoes_concluidas, 0)) as sessoes_concluidas
+      FROM estatisticas_diarias
+      WHERE usuario_id = ? AND date(data_ref) >= date(?)
+      `,
+      [userId, weekStart]
+    )
+  ]);
+
+  const dailyChallenges: ChallengeItem[] = [
+    {
+      id: "daily_focus_blocks",
+      title: "Concluir 2 blocos de foco (50 min)",
+      progress: Math.min(daily?.foco_min ?? 0, 50),
+      target: 50,
+      xp: 25,
+      period: "diario",
+      premium: false,
+      stage: 1
+    },
+    {
+      id: "daily_tasks",
+      title: "Finalizar 3 tarefas",
+      progress: Math.min(daily?.tarefas_concluidas ?? 0, 3),
+      target: 3,
+      xp: 20,
+      period: "diario",
+      premium: false,
+      stage: 1
+    },
+    {
+      id: "daily_habits",
+      title: "Marcar 2 habitos",
+      progress: Math.min(daily?.habitos_concluidos ?? 0, 2),
+      target: 2,
+      xp: 15,
+      period: "diario",
+      premium: false,
+      stage: 1
+    }
+  ];
+
+  const weeklyChallenges: ChallengeItem[] = [
+    {
+      id: "weekly_focus",
+      title: "Acumular 300 min de foco",
+      progress: Math.min(weekly?.foco_min ?? 0, 300),
+      target: 300,
+      xp: 80,
+      period: "semanal",
+      premium: false,
+      stage: 1
+    },
+    {
+      id: "weekly_tasks",
+      title: "Concluir 12 tarefas na semana",
+      progress: Math.min(weekly?.tarefas_concluidas ?? 0, 12),
+      target: 12,
+      xp: 70,
+      period: "semanal",
+      premium: false,
+      stage: 1
+    }
+  ];
+
+  const premiumTrack: ChallengeItem[] = isPremium
+    ? [
+        {
+          id: "premium_stage_1",
+          title: "Trilha Premium Fase 1: 5 sessoes concluidas",
+          progress: Math.min(weekly?.sessoes_concluidas ?? 0, 5),
+          target: 5,
+          xp: 90,
+          period: "semanal",
+          premium: true,
+          stage: 1
+        },
+        {
+          id: "premium_stage_2",
+          title: "Trilha Premium Fase 2: 450 min + 15 tarefas",
+          progress: Math.min(Math.round((weekly?.foco_min ?? 0) / 30) + (weekly?.tarefas_concluidas ?? 0), 30),
+          target: 30,
+          xp: 140,
+          period: "semanal",
+          premium: true,
+          stage: 2
+        }
+      ]
+    : [];
+
+  return {
+    dailyChallenges,
+    weeklyChallenges,
+    premiumTrack
+  };
 }

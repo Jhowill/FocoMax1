@@ -5,6 +5,8 @@ import { AppButton } from "@/components/common/AppButton";
 import { ScreenContainer } from "@/components/common/ScreenContainer";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing } from "@/theme/spacing";
+import { radius } from "@/theme/shape";
+import { typography } from "@/theme/typography";
 
 interface Props {
   title: string;
@@ -29,8 +31,8 @@ export function OnboardingLayout({
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <View style={[styles.badge, { backgroundColor: colors.primarySoft }]}>
-          <Text style={[styles.badgeLabel, { color: colors.primary }]}>FocoMax</Text>
+        <View style={[styles.badge, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+          <Text style={[styles.badgeLabel, { color: colors.accent }]}>FocoMax</Text>
         </View>
         <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
         <Text style={[styles.subtitle, { color: colors.mutedText }]}>{subtitle}</Text>
@@ -47,35 +49,32 @@ export function OnboardingLayout({
 const styles = StyleSheet.create({
   header: {
     marginTop: spacing.md,
-    gap: spacing.xs
+    gap: spacing.sm
   },
   badge: {
     alignSelf: "flex-start",
-    minHeight: 30,
-    borderRadius: 999,
-    paddingHorizontal: spacing.sm,
+    minHeight: 34,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    paddingHorizontal: spacing.mdPlus,
     justifyContent: "center"
   },
   badgeLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.2
+    ...typography.overline
   },
   title: {
-    fontSize: 32,
-    fontWeight: "900"
+    ...typography.h1
   },
   subtitle: {
-    fontSize: 15,
-    lineHeight: 22
+    ...typography.body
   },
   content: {
     flex: 1,
-    gap: spacing.sm,
-    marginTop: spacing.xs
+    gap: spacing.md,
+    marginTop: spacing.sm
   },
   actions: {
-    gap: spacing.sm,
+    gap: spacing.md,
     marginBottom: spacing.md
   }
 });

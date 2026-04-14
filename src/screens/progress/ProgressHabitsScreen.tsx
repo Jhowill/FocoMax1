@@ -17,7 +17,7 @@ export function ProgressHabitsScreen() {
       setLoading(true);
       setData(await getHabitAnalytics());
       setError("");
-    } catch (err) {
+    } catch {
       setError("Erro ao carregar hábitos.");
     } finally {
       setLoading(false);

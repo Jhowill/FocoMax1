@@ -34,7 +34,7 @@ export type RootStackParamList = {
   GoalDetail: { id: string };
   GoalEdit: { id: string };
 
-  FocusSession: { taskId?: string; fromQuickStart?: boolean } | undefined;
+  FocusSession: { taskId?: string; fromQuickStart?: boolean; quickDurationMin?: number } | undefined;
   FocusHistory: undefined;
   FocusSummary: { id: string };
 

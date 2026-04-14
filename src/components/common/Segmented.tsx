@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing } from "@/theme/spacing";
+import { radius } from "@/theme/shape";
+import { typography } from "@/theme/typography";
 
 export function Segmented<T extends string>({
   value,
@@ -10,13 +12,13 @@ export function Segmented<T extends string>({
   onChange
 }: {
   value: T;
-  options: Array<{ label: string; value: T }>;
+  options: { label: string; value: T }[];
   onChange: (value: T) => void;
 }) {
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.row, { borderColor: colors.border, backgroundColor: colors.card }]}>
+    <View style={[styles.row, { borderColor: colors.border, backgroundColor: colors.cardSecondary }]}>
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -27,12 +29,17 @@ export function Segmented<T extends string>({
               styles.item,
               active
                 ? {
-                    backgroundColor: colors.primary
+                    backgroundColor: colors.primary,
+                    shadowColor: colors.shadow,
+                    shadowOpacity: 0.1,
+                    shadowRadius: 6,
+                    shadowOffset: { width: 0, height: 3 },
+                    elevation: 2
                   }
                 : null
             ]}
           >
-            <Text style={{ color: active ? "#FFFFFF" : colors.text, fontSize: 12, fontWeight: "600" }}>
+            <Text style={[styles.label, { color: active ? colors.textOnPrimary : colors.text }]}>
               {option.label}
             </Text>
           </Pressable>
@@ -45,15 +52,19 @@ export function Segmented<T extends string>({
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 3
+    borderWidth: 1.2,
+    borderRadius: radius.lg,
+    padding: spacing.xxs,
+    gap: spacing.xxs
   },
   item: {
     flex: 1,
-    minHeight: 34,
-    borderRadius: 10,
+    minHeight: 44,
+    borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center"
+  },
+  label: {
+    ...typography.caption
   }
 });

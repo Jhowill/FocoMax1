@@ -9,7 +9,7 @@ import { spacing } from "@/theme/spacing";
 
 interface Props {
   initial?: Partial<HabitInput>;
-  categories?: Array<{ id: string; nome: string }>;
+  categories?: { id: string; nome: string }[];
   onSubmit: (input: HabitInput) => Promise<void>;
   submitLabel?: string;
 }
@@ -23,7 +23,7 @@ export function HabitForm({ initial, categories = [], onSubmit, submitLabel = "S
   const [metaSemanal, setMetaSemanal] = useState(`${initial?.meta_semanal ?? 5}`);
   const [tipo, setTipo] = useState(initial?.tipo ?? "consistência");
   const [dificuldade, setDificuldade] = useState(initial?.dificuldade ?? "média");
-  const [cor, setCor] = useState(initial?.cor ?? "#3B82F6");
+  const [cor, setCor] = useState(initial?.cor ?? colors.primary);
   const [icone, setIcone] = useState(initial?.icone ?? "check");
   const [categoriaId, setCategoriaId] = useState(initial?.categoria_id ?? null);
   const [isSaving, setIsSaving] = useState(false);
@@ -79,7 +79,7 @@ export function HabitForm({ initial, categories = [], onSubmit, submitLabel = "S
       <AppInput label="Meta semanal" value={metaSemanal} onChangeText={setMetaSemanal} keyboardType="numeric" />
       <AppInput label="Tipo" value={tipo} onChangeText={setTipo} placeholder="Ex.: saúde mental" />
       <AppInput label="Dificuldade" value={dificuldade} onChangeText={setDificuldade} placeholder="baixa, média ou alta" />
-      <AppInput label="Cor (hex)" value={cor} onChangeText={setCor} placeholder="#3B82F6" />
+      <AppInput label="Cor (hex)" value={cor} onChangeText={setCor} placeholder={colors.primary} />
       <AppInput label="Ícone" value={icone} onChangeText={setIcone} placeholder="check" />
 
       <Text style={[styles.label, { color: colors.mutedText }]}>Categoria</Text>
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   pill: {
     borderWidth: 1,
-    borderRadius: 999,
+    borderRadius: 10,
     minHeight: 32,
     paddingHorizontal: spacing.sm,
     alignItems: "center",

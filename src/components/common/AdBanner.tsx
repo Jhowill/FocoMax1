@@ -5,6 +5,8 @@ import { AppButton } from "@/components/common/AppButton";
 import { shouldShowAd, simulateRemoveAdsPurchase } from "@/services/monetizationService";
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing } from "@/theme/spacing";
+import { elevation, radius } from "@/theme/shape";
+import { typography } from "@/theme/typography";
 
 interface Props {
   placement?: "home" | "planning" | "progress" | "profile";
@@ -24,14 +26,14 @@ export function AdBanner({ placement = "home", onUpgrade }: Props) {
   }
 
   return (
-    <View style={[styles.banner, { borderColor: colors.border, backgroundColor: colors.badge }]}>
-      <Text style={[styles.label, { color: colors.text }]}>Anúncio leve ({placement})</Text>
+    <View style={[styles.banner, { borderColor: colors.border, backgroundColor: colors.cardSecondary, shadowColor: colors.shadow }]}>
+      <Text style={[styles.label, { color: colors.text }]}>Espaco patrocinado ({placement})</Text>
       <Text style={[styles.text, { color: colors.mutedText }]}>
-        Continue com o plano gratuito ou remova anúncios permanentemente.
+        O plano gratuito exibe poucos anuncios em momentos seguros. No Premium, sua experiencia fica 100% limpa.
       </Text>
       <View style={styles.actions}>
         <AppButton
-          title="Remover anúncios"
+          title="Remover anuncios para sempre"
           onPress={async () => {
             await simulateRemoveAdsPurchase();
             setVisible(false);
@@ -46,20 +48,20 @@ export function AdBanner({ placement = "home", onUpgrade }: Props) {
 
 const styles = StyleSheet.create({
   banner: {
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: spacing.sm,
-    gap: spacing.xs
+    borderWidth: 1.2,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    gap: spacing.sm,
+    ...elevation.sm
   },
   label: {
-    fontSize: 12,
-    fontWeight: "700"
+    ...typography.overline
   },
   text: {
-    fontSize: 12
+    ...typography.small
   },
   actions: {
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     alignItems: "flex-start"
   }
 });

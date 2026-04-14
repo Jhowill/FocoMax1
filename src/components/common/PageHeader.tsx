@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing } from "@/theme/spacing";
+import { typography } from "@/theme/typography";
 
 interface Props {
   title: string;
@@ -26,19 +27,18 @@ export function PageHeader({ title, subtitle, right }: Props) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: spacing.sm
+    gap: spacing.md
   },
   left: {
     flex: 1,
-    gap: 4
+    gap: spacing.xs
   },
   title: {
-    fontSize: 28,
-    fontWeight: "900"
+    ...typography.h2
   },
   subtitle: {
-    fontSize: 14
+    ...typography.small
   }
 });

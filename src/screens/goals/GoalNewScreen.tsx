@@ -14,7 +14,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "GoalNew">;
 
 export function GoalNewScreen({ navigation }: Props) {
   const { colors } = useTheme();
-  const [areas, setAreas] = useState<Array<{ id: string; nome: string }>>([]);
+  const [areas, setAreas] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -21,8 +21,8 @@ export function GoalDetailScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [goal, setGoal] = useState<Awaited<ReturnType<typeof getGoalById>>>();
-  const [tasks, setTasks] = useState<Array<{ id: string; titulo: string; status: string }>>([]);
-  const [habits, setHabits] = useState<Array<{ id: string; nome: string }>>([]);
+  const [tasks, setTasks] = useState<{ id: string; titulo: string; status: string }[]>([]);
+  const [habits, setHabits] = useState<{ id: string; nome: string }[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -42,7 +42,7 @@ export function GoalDetailScreen({ route, navigation }: Props) {
       setTasks(taskData);
       setHabits(habitData);
       setError("");
-    } catch (err) {
+    } catch {
       setError("Erro ao abrir meta.");
     } finally {
       setLoading(false);

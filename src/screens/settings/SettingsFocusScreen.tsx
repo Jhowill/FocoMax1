@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { AppButton } from "@/components/common/AppButton";
 import { AppCard } from "@/components/common/AppCard";
 import { AppInput } from "@/components/common/AppInput";
+import { getBoolPref, setBoolPref } from "@/services/localPrefsService";
+import { listSystemShortcuts, openPlatformFocusSettings, openShortcut } from "@/services/systemIntegrationService";
 import { getAppSettings, updateAppSettings } from "@/services/userService";
 import { useTheme } from "@/theme/ThemeProvider";
 
@@ -18,6 +20,9 @@ export function SettingsFocusScreen() {
   const [vibracao, setVibracao] = useState(true);
   const [autoPausa, setAutoPausa] = useState(false);
   const [autoProxima, setAutoProxima] = useState(false);
+  const [focusShield, setFocusShield] = useState(false);
+  const [iosHint, setIosHint] = useState(true);
+  const [shortcutsEnabled, setShortcutsEnabled] = useState(true);
 
   useEffect(() => {
     getAppSettings().then((settings) => {
@@ -31,6 +36,9 @@ export function SettingsFocusScreen() {
       setAutoPausa(Boolean(settings?.pausa_auto_inicio ?? 0));
       setAutoProxima(Boolean(settings?.proxima_sessao_auto_inicio ?? 0));
     });
+    getBoolPref("focus_shield_enabled").then(setFocusShield);
+    getBoolPref("ios_focus_hint_enabled").then(setIosHint);
+    getBoolPref("shortcuts_enabled").then(setShortcutsEnabled);
   }, []);
 
   const save = async () => {
@@ -45,31 +53,63 @@ export function SettingsFocusScreen() {
       pausa_auto_inicio: autoPausa ? 1 : 0,
       proxima_sessao_auto_inicio: autoProxima ? 1 : 0
     });
+    await setBoolPref("focus_shield_enabled", focusShield);
+    await setBoolPref("ios_focus_hint_enabled", iosHint);
+    await setBoolPref("shortcuts_enabled", shortcutsEnabled);
+    Alert.alert("Configuracoes salvas", "Preferencias de foco atualizadas.");
   };
 
   return (
     <View style={styles.container}>
       <AppCard>
-        <Text style={[styles.title, { color: colors.text }]}>Configurações de foco</Text>
-        <AppInput label="Duração padrão (min)" value={duracaoPadrao} onChangeText={setDuracaoPadrao} keyboardType="numeric" />
+        <Text style={[styles.title, { color: colors.text }]}>Configuracoes de foco</Text>
+        <AppInput label="Duracao padrao (min)" value={duracaoPadrao} onChangeText={setDuracaoPadrao} keyboardType="numeric" />
         <AppInput label="Pausa curta (min)" value={pausaCurta} onChangeText={setPausaCurta} keyboardType="numeric" />
         <AppInput label="Pausa longa (min)" value={pausaLonga} onChangeText={setPausaLonga} keyboardType="numeric" />
-        <AppInput label="Número de ciclos" value={ciclos} onChangeText={setCiclos} keyboardType="numeric" />
-        <AppInput label="Foco livre padrão (min)" value={focoLivre} onChangeText={setFocoLivre} keyboardType="numeric" />
+        <AppInput label="Numero de ciclos" value={ciclos} onChangeText={setCiclos} keyboardType="numeric" />
+        <AppInput label="Foco livre padrao (min)" value={focoLivre} onChangeText={setFocoLivre} keyboardType="numeric" />
         <AppInput label="Som" value={som} onChangeText={setSom} />
 
         <Pressable onPress={() => setVibracao((prev) => !prev)} style={[styles.toggle, { borderColor: colors.border, backgroundColor: colors.card }]}>
-          <Text style={{ color: colors.text }}>Vibração: {vibracao ? "Ativa" : "Inativa"}</Text>
+          <Text style={{ color: colors.text }}>Vibracao: {vibracao ? "Ativa" : "Inativa"}</Text>
         </Pressable>
         <Pressable onPress={() => setAutoPausa((prev) => !prev)} style={[styles.toggle, { borderColor: colors.border, backgroundColor: colors.card }]}>
-          <Text style={{ color: colors.text }}>Início automático da pausa: {autoPausa ? "Ativo" : "Inativo"}</Text>
+          <Text style={{ color: colors.text }}>Inicio automatico da pausa: {autoPausa ? "Ativo" : "Inativo"}</Text>
         </Pressable>
         <Pressable onPress={() => setAutoProxima((prev) => !prev)} style={[styles.toggle, { borderColor: colors.border, backgroundColor: colors.card }]}>
-          <Text style={{ color: colors.text }}>Próxima sessão automática: {autoProxima ? "Ativa" : "Inativa"}</Text>
+          <Text style={{ color: colors.text }}>Proxima sessao automatica: {autoProxima ? "Ativa" : "Inativa"}</Text>
         </Pressable>
+        <Pressable onPress={() => setFocusShield((prev) => !prev)} style={[styles.toggle, { borderColor: colors.border, backgroundColor: colors.card }]}>
+          <Text style={{ color: colors.text }}>Bloqueio anti-distracao (foco profundo): {focusShield ? "Ativo" : "Inativo"}</Text>
+        </Pressable>
+        <Pressable onPress={() => setIosHint((prev) => !prev)} style={[styles.toggle, { borderColor: colors.border, backgroundColor: colors.card }]}>
+          <Text style={{ color: colors.text }}>Mostrar dica de modo Foco no iOS: {iosHint ? "Ativo" : "Inativo"}</Text>
+        </Pressable>
+        <Pressable onPress={() => setShortcutsEnabled((prev) => !prev)} style={[styles.toggle, { borderColor: colors.border, backgroundColor: colors.card }]}>
+          <Text style={{ color: colors.text }}>Atalhos de sistema ativos: {shortcutsEnabled ? "Sim" : "Nao"}</Text>
+        </Pressable>
+
+        <AppButton title="Abrir ajustes do sistema" onPress={openPlatformFocusSettings} variant="secondary" />
+        {Platform.OS === "android" && focusShield ? (
+          <Text style={{ color: colors.mutedText, fontSize: 12 }}>
+            No Android, ative permissao de uso/acessibilidade para reforcar o bloqueio anti-distracao.
+          </Text>
+        ) : null}
 
         <AppButton title="Salvar foco" onPress={save} />
       </AppCard>
+
+      {shortcutsEnabled ? (
+        <AppCard>
+          <Text style={[styles.title, { color: colors.text, fontSize: 16 }]}>Atalhos rapidos</Text>
+          <Text style={{ color: colors.mutedText, fontSize: 12 }}>
+            Funciona como atalho de sistema por deep link para abrir direto no modo foco.
+          </Text>
+          {listSystemShortcuts().map((shortcut) => (
+            <AppButton key={shortcut.id} title={shortcut.label} onPress={() => openShortcut(shortcut.url)} variant="ghost" />
+          ))}
+        </AppCard>
+      ) : null}
     </View>
   );
 }

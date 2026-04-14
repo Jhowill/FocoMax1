@@ -227,3 +227,91 @@ export async function getTodayMoodEnergy() {
     [userId, dataRef]
   );
 }
+
+export async function getRecoverableFocusSession() {
+  const userId = await getCurrentUserId();
+  return getFirst<FocusSession>(
+    `
+    SELECT *
+    FROM sessoes_foco
+    WHERE usuario_id = ?
+      AND status IN ('interrompida', 'em_andamento')
+    ORDER BY updated_at DESC
+    LIMIT 1
+    `,
+    [userId]
+  );
+}
+
+export async function resumeFromRecoverableSession(sessionId: string) {
+  const base = await getFocusSessionById(sessionId);
+  if (!base) {
+    return "";
+  }
+
+  return startFocusSession({
+    tarefaId: base.tarefa_id ?? undefined,
+    objetivoId: base.objetivo_id ?? undefined,
+    modo: base.modo,
+    duracaoPlanejadaMin: base.duracao_planejada_min
+  });
+}
+
+export async function listFavoriteDistractionReasons(limit = 3) {
+  const userId = await getCurrentUserId();
+  return getAll<{ id: string; nome: string; total: number }>(
+    `
+    SELECT md.id, md.nome, COUNT(*) as total
+    FROM interrupcoes i
+    INNER JOIN sessoes_foco sf ON sf.id = i.sessao_id
+    INNER JOIN motivos_distracao md ON md.id = i.motivo_id
+    WHERE sf.usuario_id = ?
+    GROUP BY md.id, md.nome
+    ORDER BY total DESC, md.nome ASC
+    LIMIT ?
+    `,
+    [userId, limit]
+  );
+}
+
+export async function getSmartBreakRecommendation() {
+  const userId = await getCurrentUserId();
+  const recent = await getAll<{ duracao_planejada_min: number; duracao_real_segundos: number; status: string }>(
+    `
+    SELECT duracao_planejada_min, duracao_real_segundos, status
+    FROM sessoes_foco
+    WHERE usuario_id = ?
+    ORDER BY created_at DESC
+    LIMIT 20
+    `,
+    [userId]
+  );
+
+  if (recent.length === 0) {
+    return {
+      minutes: 5,
+      type: "curta" as const,
+      reason: "Pausa curta recomendada para manter ritmo."
+    };
+  }
+
+  const interruptions = recent.filter((item) => item.status === "interrompida").length;
+  const interruptionRate = interruptions / recent.length;
+  const avgPlanned = Math.round(
+    recent.reduce((sum, row) => sum + (row.duracao_planejada_min || 0), 0) / Math.max(recent.length, 1)
+  );
+
+  if (interruptionRate >= 0.4 || avgPlanned >= 45) {
+    return {
+      minutes: 12,
+      type: "longa" as const,
+      reason: "Pausa longa recomendada para reduzir interrupcoes em blocos longos."
+    };
+  }
+
+  return {
+    minutes: 5,
+    type: "curta" as const,
+    reason: "Pausa curta recomendada para manter consistencia."
+  };
+}

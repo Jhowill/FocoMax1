@@ -1,53 +1,141 @@
 export type ThemeMode = "light" | "dark" | "auto";
+export type PremiumVisualPack = "default" | "aurora" | "sunrise";
 
 export const palette = {
-  navy900: "#101B35",
-  navy700: "#1F3264",
-  sky600: "#2F6FED",
-  sky500: "#4E88F1",
-  sky200: "#C7D9FF",
-  slate900: "#1A2540",
-  slate700: "#364A72",
-  slate600: "#55627D",
-  slate400: "#8E9AB4",
-  slate300: "#BCC6DB",
-  slate200: "#DCE3F3",
-  slate100: "#EEF2FC",
-  cream50: "#F7F9FF",
+  sky700: "#3E6BEB",
+  sky600: "#4D7BFF",
+  sky500: "#6A93FF",
+  sky100: "#E8F0FF",
+  teal600: "#24B79C",
+  teal500: "#39C7AE",
+  amber500: "#E9A23B",
+  amber300: "#F6CD8D",
+  neutral950: "#0B1020",
+  neutral900: "#131A2B",
+  neutral850: "#1A2237",
+  neutral800: "#1F2940",
+  neutral700: "#2D3A58",
+  neutral600: "#5B657A",
+  neutral500: "#8A94AB",
+  neutral300: "#D7DEEA",
+  neutral200: "#E4E9F5",
+  neutral100: "#F5F8FF",
   white: "#FFFFFF",
-  green500: "#2BAA7C",
-  amber500: "#E6A53B",
-  red500: "#D9534F",
-  purple500: "#7D6BFA",
-  teal500: "#2FA6A1"
+  success500: "#2FB37F",
+  warning500: "#E9A23B",
+  danger500: "#DF6676",
+  info500: "#4D7BFF"
 };
 
-export const lightTheme = {
-  background: palette.cream50,
+const lightThemeBase = {
+  background: palette.white,
   card: palette.white,
-  cardSecondary: "#F2F6FF",
+  cardSecondary: palette.neutral100,
+  surfaceElevated: palette.white,
+  inputBackground: "#F8FAFF",
   primary: palette.sky600,
-  primarySoft: "#EAF1FF",
-  text: palette.slate900,
-  mutedText: palette.slate600,
-  border: palette.slate200,
-  success: palette.green500,
-  warning: palette.amber500,
-  danger: palette.red500,
-  badge: "#EEF3FF"
+  primarySoft: palette.sky100,
+  secondary: "#5D6F92",
+  accent: palette.teal600,
+  text: "#101828",
+  mutedText: palette.neutral600,
+  border: palette.neutral200,
+  success: palette.success500,
+  warning: palette.warning500,
+  danger: palette.danger500,
+  info: palette.info500,
+  badge: "#EEF3FF",
+  shadow: "#0E1628",
+  overlay: "rgba(15, 23, 42, 0.12)",
+  focusRing: "#8EAFFF",
+  textOnPrimary: "#FFFFFF",
+  gradientTop: "#FFFFFF",
+  gradientMid: "#FCFDFF",
+  gradientBottom: "#F6F9FF",
+  premiumHighlight: "#DDE8FF"
 };
 
-export const darkTheme = {
-  background: "#0B1020",
-  card: "#121C34",
-  cardSecondary: "#182441",
-  primary: "#7DA8FF",
-  primarySoft: "#21345E",
-  text: "#F4F7FF",
-  mutedText: "#A7B5D3",
-  border: "#253661",
-  success: "#56D2A5",
-  warning: "#F1C06A",
-  danger: "#F28686",
-  badge: "#1A2A4D"
+const darkThemeBase = {
+  background: palette.neutral950,
+  card: palette.neutral900,
+  cardSecondary: palette.neutral850,
+  surfaceElevated: palette.neutral850,
+  inputBackground: palette.neutral800,
+  primary: "#7FA4FF",
+  primarySoft: "#263555",
+  secondary: "#A7B6D8",
+  accent: "#5ED6BE",
+  text: "#EEF3FF",
+  mutedText: "#B5C0D8",
+  border: "#2D3957",
+  success: "#4BC997",
+  warning: "#F2BF67",
+  danger: "#FF8E9D",
+  info: "#8AAFFF",
+  badge: "#243352",
+  shadow: "#02050C",
+  overlay: "rgba(1, 4, 12, 0.62)",
+  focusRing: "#B1C9FF",
+  textOnPrimary: "#0C1324",
+  gradientTop: "#11182A",
+  gradientMid: palette.neutral950,
+  gradientBottom: "#080D1A",
+  premiumHighlight: "#2A3C66"
 };
+
+const visualPackOverrides: Record<
+  PremiumVisualPack,
+  {
+    light: Partial<typeof lightThemeBase>;
+    dark: Partial<typeof darkThemeBase>;
+  }
+> = {
+  default: {
+    light: {},
+    dark: {}
+  },
+  aurora: {
+    light: {
+      primary: "#3F8CFF",
+      accent: "#33BFD8",
+      gradientTop: "#FFFFFF",
+      gradientMid: "#F7FBFF",
+      gradientBottom: "#EDF5FF"
+    },
+    dark: {
+      primary: "#82BEFF",
+      accent: "#5BD8E9",
+      gradientTop: "#122137",
+      gradientMid: "#0D1424",
+      gradientBottom: "#090F1C"
+    }
+  },
+  sunrise: {
+    light: {
+      primary: "#3C7EFA",
+      accent: "#F2AE63",
+      gradientTop: "#FFFFFF",
+      gradientMid: "#FFF9F2",
+      gradientBottom: "#FFF1E1"
+    },
+    dark: {
+      primary: "#92B9FF",
+      accent: "#F7C68F",
+      gradientTop: "#281E1B",
+      gradientMid: "#121722",
+      gradientBottom: "#0D111B"
+    }
+  }
+};
+
+export function resolveThemeColors(isDark: boolean, visualPack: PremiumVisualPack = "default") {
+  const base = isDark ? darkThemeBase : lightThemeBase;
+  const overrides = isDark ? visualPackOverrides[visualPack].dark : visualPackOverrides[visualPack].light;
+  return {
+    ...base,
+    ...overrides
+  };
+}
+
+export const lightTheme = resolveThemeColors(false, "default");
+export const darkTheme = resolveThemeColors(true, "default");

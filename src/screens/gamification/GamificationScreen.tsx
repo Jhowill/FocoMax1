@@ -6,7 +6,9 @@ import { AppButton } from "@/components/common/AppButton";
 import { AppCard } from "@/components/common/AppCard";
 import { EmptyState, ErrorState, LoadingState } from "@/components/common/StateViews";
 import { useRootNavigation } from "@/navigation/hooks";
-import { evaluateAchievements, getGamificationSummary } from "@/services/gamificationService";
+import { getPremiumState } from "@/services/monetizationService";
+import { getPremiumCapabilities } from "@/services/premiumCapabilities";
+import { evaluateAchievements, getGamificationSummary, getStructuredChallenges } from "@/services/gamificationService";
 import { useTheme } from "@/theme/ThemeProvider";
 
 export function GamificationScreen() {
@@ -15,15 +17,21 @@ export function GamificationScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState<Awaited<ReturnType<typeof getGamificationSummary>>>();
+  const [challengeBoard, setChallengeBoard] = useState<Awaited<ReturnType<typeof getStructuredChallenges>>>();
+  const [premiumTrackEnabled, setPremiumTrackEnabled] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
       await evaluateAchievements();
-      setData(await getGamificationSummary());
+      const [summary, premiumState] = await Promise.all([getGamificationSummary(), getPremiumState()]);
+      const capabilities = getPremiumCapabilities(premiumState);
+      setPremiumTrackEnabled(capabilities.premium_challenges);
+      setChallengeBoard(await getStructuredChallenges(capabilities.premium_challenges));
+      setData(summary);
       setError("");
-    } catch (err) {
-      setError("Erro ao carregar gamificação.");
+    } catch {
+      setError("Erro ao carregar gamificacao.");
     } finally {
       setLoading(false);
     }
@@ -36,9 +44,9 @@ export function GamificationScreen() {
   );
 
   if (loading) {
-    return <LoadingState message="Carregando gamificação..." />;
+    return <LoadingState message="Carregando gamificacao..." />;
   }
-  if (error || !data) {
+  if (error || !data || !challengeBoard) {
     return <ErrorState message={error || "Sem dados"} onRetry={load} />;
   }
 
@@ -48,27 +56,61 @@ export function GamificationScreen() {
   return (
     <View style={styles.container}>
       <AppCard>
-        <Text style={[styles.title, { color: colors.text }]}>Gamificação útil</Text>
-        <Text style={{ color: colors.text }}>Nível: {data.profile?.nivel ?? 1}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Gamificacao util</Text>
+        <Text style={{ color: colors.text }}>Nivel: {data.profile?.nivel ?? 1}</Text>
         <Text style={{ color: colors.text }}>XP total: {currentXp}</Text>
-        <Text style={{ color: colors.text }}>Próximo nível em: {Math.max(nextLevelXp - currentXp, 0)} XP</Text>
+        <Text style={{ color: colors.text }}>Proximo nivel em: {Math.max(nextLevelXp - currentXp, 0)} XP</Text>
         <Text style={{ color: colors.text }}>Streak foco: {data.streakFoco?.atual ?? 0} dias</Text>
-        <Text style={{ color: colors.text }}>Streak hábitos: {data.streakHabito?.atual ?? 0} dias</Text>
+        <Text style={{ color: colors.text }}>Streak habitos: {data.streakHabito?.atual ?? 0} dias</Text>
       </AppCard>
 
       <AppCard>
-        <Text style={[styles.subtitle, { color: colors.text }]}>Desafios do dia</Text>
-        <Text style={{ color: colors.text }}>• Concluir 2 sessões de foco.</Text>
-        <Text style={{ color: colors.text }}>• Finalizar 3 tarefas pendentes.</Text>
-        <Text style={{ color: colors.text }}>• Marcar 2 hábitos como concluídos.</Text>
+        <Text style={[styles.subtitle, { color: colors.text }]}>Desafios diarios</Text>
+        {challengeBoard.dailyChallenges.map((challenge) => (
+          <View key={challenge.id} style={styles.challengeRow}>
+            <Text style={{ color: colors.text, fontSize: 12 }}>{challenge.title}</Text>
+            <Text style={{ color: colors.mutedText, fontSize: 12 }}>
+              {challenge.progress}/{challenge.target} • +{challenge.xp} XP
+            </Text>
+          </View>
+        ))}
       </AppCard>
 
       <AppCard>
-        <Text style={[styles.subtitle, { color: colors.text }]}>Desafios da semana</Text>
-        <Text style={{ color: colors.text }}>• Manter streak de foco por 5 dias.</Text>
-        <Text style={{ color: colors.text }}>• Concluir 10 tarefas.</Text>
-        <Text style={{ color: colors.text }}>• Manter taxa de hábitos acima de 70%.</Text>
+        <Text style={[styles.subtitle, { color: colors.text }]}>Desafios semanais</Text>
+        {challengeBoard.weeklyChallenges.map((challenge) => (
+          <View key={challenge.id} style={styles.challengeRow}>
+            <Text style={{ color: colors.text, fontSize: 12 }}>{challenge.title}</Text>
+            <Text style={{ color: colors.mutedText, fontSize: 12 }}>
+              {challenge.progress}/{challenge.target} • +{challenge.xp} XP
+            </Text>
+          </View>
+        ))}
       </AppCard>
+
+      {premiumTrackEnabled ? (
+        <AppCard>
+          <Text style={[styles.subtitle, { color: colors.text }]}>Trilha premium estruturada</Text>
+          {challengeBoard.premiumTrack.map((challenge) => (
+            <View key={challenge.id} style={styles.challengeRow}>
+              <Text style={{ color: colors.text, fontSize: 12 }}>
+                Fase {challenge.stage}: {challenge.title}
+              </Text>
+              <Text style={{ color: colors.mutedText, fontSize: 12 }}>
+                {challenge.progress}/{challenge.target} • +{challenge.xp} XP
+              </Text>
+            </View>
+          ))}
+        </AppCard>
+      ) : (
+        <AppCard>
+          <Text style={[styles.subtitle, { color: colors.text }]}>Trilha premium</Text>
+          <Text style={{ color: colors.mutedText, fontSize: 12 }}>
+            No Premium voce libera desafios em fases com progressao estruturada e recompensas maiores.
+          </Text>
+          <AppButton title="Desbloquear desafios premium" onPress={() => navigation.navigate("Premium")} variant="secondary" />
+        </AppCard>
+      )}
 
       <AppCard>
         <View style={styles.actions}>
@@ -78,7 +120,7 @@ export function GamificationScreen() {
       </AppCard>
 
       {data.achievements.length === 0 ? (
-        <EmptyState title="Sem conquistas ainda" description="Sua evolução será destravada conforme você mantém consistência." />
+        <EmptyState title="Sem conquistas ainda" description="Sua evolucao sera destravada conforme voce mantem consistencia." />
       ) : null}
     </View>
   );
@@ -99,5 +141,9 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: 8
+  },
+  challengeRow: {
+    gap: 2,
+    marginBottom: 6
   }
 });

@@ -11,7 +11,7 @@ export function AchievementsScreen() {
   const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [achievements, setAchievements] = useState<Array<{ id: string; nome: string; descricao: string; desbloqueada_em: string }>>([]);
+  const [achievements, setAchievements] = useState<{ id: string; nome: string; descricao: string; desbloqueada_em: string }[]>([]);
 
   const load = async () => {
     try {
@@ -19,7 +19,7 @@ export function AchievementsScreen() {
       const data = await getGamificationSummary();
       setAchievements(data.achievements);
       setError("");
-    } catch (err) {
+    } catch {
       setError("Não foi possível carregar conquistas.");
     } finally {
       setLoading(false);

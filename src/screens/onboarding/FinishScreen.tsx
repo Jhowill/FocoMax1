@@ -75,7 +75,7 @@ export function FinishScreen({ navigation }: Props) {
         routes: [{ name: "HomeTabs", params: { screen: "HomeToday" } }]
       });
       navigated = true;
-    } catch (error) {
+    } catch {
       Alert.alert(
         "Entrada com dados parciais",
         "Algumas informacoes nao puderam ser salvas agora. Voce pode continuar e ajustar em Configuracoes."

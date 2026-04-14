@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "FocoMax",
-    "slug": "focomax",
+    "name": "FocoFlow",
+    "slug": "focoflow",
+    "scheme": "focoflow",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -14,15 +15,16 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.focomax.app"
+      "bundleIdentifier": "com.focoflow.app"
     },
     "android": {
-      "package": "com.focomax.app"
+      "package": "com.focoflow.app"
     },
     "plugins": [
       "expo-sqlite",
       "expo-notifications",
-      "expo-asset"
+      "expo-asset",
+      "expo-font"
     ]
   }
 }

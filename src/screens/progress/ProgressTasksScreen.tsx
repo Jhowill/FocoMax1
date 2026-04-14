@@ -17,7 +17,7 @@ export function ProgressTasksScreen() {
       setLoading(true);
       setData(await getTaskAnalytics());
       setError("");
-    } catch (err) {
+    } catch {
       setError("Erro ao carregar tarefas.");
     } finally {
       setLoading(false);

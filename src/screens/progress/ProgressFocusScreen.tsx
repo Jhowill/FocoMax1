@@ -18,7 +18,7 @@ export function ProgressFocusScreen() {
       setLoading(true);
       setData(await getFocusAnalytics());
       setError("");
-    } catch (err) {
+    } catch {
       setError("Erro ao carregar análise de foco.");
     } finally {
       setLoading(false);

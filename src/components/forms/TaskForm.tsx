@@ -9,9 +9,9 @@ import { spacing } from "@/theme/spacing";
 
 interface Props {
   initial?: Partial<TaskInput>;
-  categories?: Array<{ id: string; nome: string }>;
-  goals?: Array<{ id: string; titulo: string }>;
-  areas?: Array<{ id: string; nome: string }>;
+  categories?: { id: string; nome: string }[];
+  goals?: { id: string; titulo: string }[];
+  areas?: { id: string; nome: string }[];
   onSubmit: (input: TaskInput) => Promise<void>;
   submitLabel?: string;
 }
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   pill: {
     borderWidth: 1,
     minHeight: 32,
-    borderRadius: 999,
+    borderRadius: 10,
     paddingHorizontal: spacing.sm,
     alignItems: "center",
     justifyContent: "center"

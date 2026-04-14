@@ -4,6 +4,25 @@ import { BarChart } from "react-native-chart-kit";
 
 import { useTheme } from "@/theme/ThemeProvider";
 
+function hexToRgba(hex: string, opacity = 1) {
+  const normalized = hex.replace("#", "");
+  const value =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((char) => char + char)
+          .join("")
+      : normalized;
+  const parsed = Number.parseInt(value, 16);
+  if (Number.isNaN(parsed)) {
+    return `rgba(0,0,0,${opacity})`;
+  }
+  const r = (parsed >> 16) & 255;
+  const g = (parsed >> 8) & 255;
+  const b = parsed & 255;
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
 export function SimpleBarChart({
   labels,
   values
@@ -11,8 +30,8 @@ export function SimpleBarChart({
   labels: string[];
   values: number[];
 }) {
-  const { colors, isDark } = useTheme();
-  const width = Dimensions.get("window").width - 58;
+  const { colors } = useTheme();
+  const width = Dimensions.get("window").width - 52;
   const data = {
     labels: labels.length ? labels : ["-"],
     datasets: [{ data: values.length ? values : [0] }]
@@ -30,14 +49,13 @@ export function SimpleBarChart({
           backgroundGradientFrom: colors.card,
           backgroundGradientTo: colors.card,
           decimalPlaces: 0,
-          color: (opacity = 1) =>
-            isDark ? `rgba(96, 165, 250, ${opacity})` : `rgba(37, 99, 235, ${opacity})`,
-          labelColor: (opacity = 1) => (isDark ? `rgba(226, 232, 240, ${opacity})` : `rgba(71, 85, 105, ${opacity})`)
+          color: (opacity = 1) => hexToRgba(colors.primary, opacity),
+          labelColor: (opacity = 1) => hexToRgba(colors.mutedText, opacity)
         }}
         fromZero
         showValuesOnTopOfBars
         style={{
-          borderRadius: 12
+          borderRadius: 20
         }}
       />
     </View>

@@ -33,7 +33,7 @@ export function HabitDetailScreen({ route, navigation }: Props) {
       setRecords(history);
       setConsistency(consistencyData);
       setError("");
-    } catch (err) {
+    } catch {
       setError("Erro ao abrir hábito.");
     } finally {
       setLoading(false);

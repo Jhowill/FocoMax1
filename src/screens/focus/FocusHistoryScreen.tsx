@@ -11,6 +11,7 @@ import { listFocusSessions } from "@/services/focusService";
 import { getPremiumState } from "@/services/monetizationService";
 import { getPremiumCapabilities } from "@/services/premiumCapabilities";
 import { useTheme } from "@/theme/ThemeProvider";
+import { typography } from "@/theme/typography";
 import { formatDuration, formatPtDateTime } from "@/utils/date";
 
 type Props = NativeStackScreenProps<RootStackParamList, "FocusHistory">;
@@ -30,8 +31,8 @@ export function FocusHistoryScreen({ navigation }: Props) {
       setHasUnlimitedHistory(capabilities.unlimited_focus_history);
       setSessions(await listFocusSessions(capabilities.unlimited_focus_history ? 200 : 30));
       setError("");
-    } catch (err) {
-      setError("Não foi possível carregar histórico.");
+    } catch {
+      setError("Nao foi possivel carregar historico.");
     } finally {
       setLoading(false);
     }
@@ -44,7 +45,7 @@ export function FocusHistoryScreen({ navigation }: Props) {
   );
 
   if (loading) {
-    return <LoadingState message="Carregando histórico de foco..." />;
+    return <LoadingState message="Carregando historico de foco..." />;
   }
   if (error) {
     return <ErrorState message={error} onRetry={load} />;
@@ -52,26 +53,26 @@ export function FocusHistoryScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <AppCard>
-        <Text style={[styles.title, { color: colors.text }]}>Histórico de sessões</Text>
+      <AppCard tone="premium">
+        <Text style={[styles.title, { color: colors.text }]}>Historico de sessoes</Text>
         {!hasUnlimitedHistory ? (
-          <Text style={{ color: colors.mutedText, fontSize: 12 }}>Plano gratuito: histórico de até 30 sessões.</Text>
+          <Text style={[styles.caption, { color: colors.mutedText }]}>Plano gratuito: historico de ate 30 sessoes.</Text>
         ) : null}
       </AppCard>
 
       {sessions.length === 0 ? (
-        <EmptyState title="Sem sessões registradas" description="Inicie uma sessão para aparecer aqui." />
+        <EmptyState title="Sem sessoes registradas" description="Inicie uma sessao para aparecer aqui." />
       ) : (
-        <AppCard>
+        <AppCard tone="soft">
           {sessions.map((session) => (
             <Pressable
               key={session.id}
-              style={styles.item}
+              style={[styles.item, { borderBottomColor: colors.border }]}
               onPress={() => navigation.navigate("FocusSummary", { id: session.id })}
             >
-              <Text style={{ color: colors.text, fontWeight: "700" }}>{session.modo.replaceAll("_", " ")}</Text>
-              <Text style={{ color: colors.mutedText, fontSize: 12 }}>
-                {formatPtDateTime(session.started_at)} • {formatDuration(Math.round(session.duracao_real_segundos / 60))} • {session.status}
+              <Text style={[styles.itemTitle, { color: colors.text }]}>{session.modo.replaceAll("_", " ")}</Text>
+              <Text style={[styles.itemMeta, { color: colors.mutedText }]}>
+                {formatPtDateTime(session.started_at)} | {formatDuration(Math.round(session.duracao_real_segundos / 60))} | {session.status}
               </Text>
             </Pressable>
           ))}
@@ -80,9 +81,9 @@ export function FocusHistoryScreen({ navigation }: Props) {
 
       {!hasUnlimitedHistory ? (
         <PremiumGateCard
-          title="Histórico completo é Premium"
-          description="Desbloqueie histórico ilimitado para comparar períodos longos e identificar sua evolução real."
-          cta="Desbloquear histórico completo"
+          title="Historico completo e Premium"
+          description="Desbloqueie historico ilimitado para comparar periodos longos e identificar sua evolucao real."
+          cta="Desbloquear historico completo"
         />
       ) : null}
     </View>
@@ -92,17 +93,26 @@ export function FocusHistoryScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 12
+    gap: 16,
+    paddingBottom: 20
   },
   title: {
-    fontSize: 18,
-    fontWeight: "800"
+    ...typography.h4
+  },
+  caption: {
+    ...typography.small
   },
   item: {
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(148,163,184,0.3)",
     marginBottom: 8,
-    paddingBottom: 8,
-    gap: 2
+    paddingBottom: 10,
+    gap: 4
+  },
+  itemTitle: {
+    ...typography.small,
+    fontWeight: "700"
+  },
+  itemMeta: {
+    ...typography.caption
   }
 });

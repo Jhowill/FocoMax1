@@ -5,6 +5,8 @@ import { AppButton } from "@/components/common/AppButton";
 import { AppCard } from "@/components/common/AppCard";
 import { useRootNavigation } from "@/navigation/hooks";
 import { useTheme } from "@/theme/ThemeProvider";
+import { radius } from "@/theme/shape";
+import { typography } from "@/theme/typography";
 
 export function PremiumGateCard({
   title = "Recurso Premium",
@@ -19,11 +21,11 @@ export function PremiumGateCard({
   const navigation = useRootNavigation();
 
   return (
-    <AppCard style={styles.card}>
+    <AppCard tone="premium" style={styles.card}>
       <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       <Text style={[styles.description, { color: colors.mutedText }]}>{description}</Text>
       <View style={styles.cta}>
-        <AppButton title={cta} onPress={() => navigation.navigate("Premium")} />
+        <AppButton title={cta} onPress={() => navigation.navigate("Premium")} variant="primary" />
       </View>
     </AppCard>
   );
@@ -31,15 +33,14 @@ export function PremiumGateCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderStyle: "dashed"
+    borderStyle: "dashed",
+    borderRadius: radius.xl
   },
   title: {
-    fontSize: 15,
-    fontWeight: "800"
+    ...typography.h4
   },
   description: {
-    fontSize: 12,
-    lineHeight: 18
+    ...typography.small
   },
   cta: {
     marginTop: 4

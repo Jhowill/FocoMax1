@@ -10,6 +10,7 @@ import { ProfileHomeScreen } from "@/screens/home/ProfileHomeScreen";
 import { ProgressHomeScreen } from "@/screens/home/ProgressHomeScreen";
 import { TodayScreen } from "@/screens/home/TodayScreen";
 import { useTheme } from "@/theme/ThemeProvider";
+import { radius } from "@/theme/shape";
 
 const Tab = createBottomTabNavigator<HomeTabParamList>();
 
@@ -38,18 +39,32 @@ export function HomeTabsNavigator() {
         headerShown: false,
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          backgroundColor: colors.card,
+          backgroundColor: colors.surfaceElevated,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 72,
-          paddingTop: 6,
-          paddingBottom: 10
+          height: 84,
+          paddingTop: 10,
+          paddingBottom: 12,
+          borderTopLeftRadius: radius.xl,
+          borderTopRightRadius: radius.xl,
+          shadowColor: colors.shadow,
+          shadowOpacity: 0.12,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: -4 },
+          elevation: 10
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedText,
+        tabBarActiveBackgroundColor: colors.primarySoft,
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: "700"
+          fontWeight: "700",
+          letterSpacing: 0.5,
+          marginTop: 2
+        },
+        tabBarItemStyle: {
+          borderRadius: radius.lg,
+          marginHorizontal: 2
         }
       }}
     >
@@ -73,7 +88,7 @@ export function HomeTabsNavigator() {
         name="HomePlanning"
         component={PlanningTab}
         options={{
-          title: "Plano",
+          title: "Planejamento",
           tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "calendar" : "calendar-outline"} color={color} size={size} />
         }}
       />

@@ -21,7 +21,7 @@ export function TaskListScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [tasks, setTasks] = useState<Awaited<ReturnType<typeof listTasks>>>([]);
-  const [categories, setCategories] = useState<Array<{ id: string; nome: string }>>([]);
+  const [categories, setCategories] = useState<{ id: string; nome: string }[]>([]);
 
   const [periodo, setPeriodo] = useState<PeriodFilter>("hoje");
   const [status, setStatus] = useState<StatusFilter>("todos");
@@ -47,7 +47,7 @@ export function TaskListScreen() {
       setTasks(taskRows);
       setCategories(categoryRows);
       setError("");
-    } catch (err) {
+    } catch {
       setError("Falha ao carregar tarefas.");
     } finally {
       setLoading(false);
@@ -127,7 +127,11 @@ export function TaskListScreen() {
       ) : (
         <AppCard>
           {tasks.map((task) => (
-            <Pressable key={task.id} style={styles.item} onPress={() => navigation.navigate("TaskDetail", { id: task.id })}>
+            <Pressable
+              key={task.id}
+              style={[styles.item, { borderBottomColor: colors.border }]}
+              onPress={() => navigation.navigate("TaskDetail", { id: task.id })}
+            >
               <Text style={{ color: colors.text, fontWeight: "700" }}>
                 {task.titulo} {task.is_archived ? "(arquivada)" : ""}
               </Text>
@@ -164,13 +168,13 @@ const styles = StyleSheet.create({
   inlineWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6
+    gap: 8
   },
   pill: {
-    borderWidth: 1,
-    borderRadius: 999,
-    minHeight: 30,
-    paddingHorizontal: 10,
+    borderWidth: 1.2,
+    borderRadius: 10,
+    minHeight: 34,
+    paddingHorizontal: 12,
     alignItems: "center",
     justifyContent: "center"
   },
@@ -179,7 +183,6 @@ const styles = StyleSheet.create({
   },
   item: {
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(148,163,184,0.25)",
     paddingBottom: 8,
     marginBottom: 8,
     gap: 2

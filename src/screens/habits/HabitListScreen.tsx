@@ -24,7 +24,7 @@ export function HabitListScreen() {
       setLoading(true);
       setHabits(await listHabits(includeArchived));
       setError("");
-    } catch (err) {
+    } catch {
       setError("Não foi possível carregar hábitos.");
     } finally {
       setLoading(false);
@@ -66,7 +66,11 @@ export function HabitListScreen() {
       ) : (
         <AppCard>
           {habits.map((habit) => (
-            <Pressable key={habit.id} style={styles.item} onPress={() => navigation.navigate("HabitDetail", { id: habit.id })}>
+            <Pressable
+              key={habit.id}
+              style={[styles.item, { borderBottomColor: colors.border }]}
+              onPress={() => navigation.navigate("HabitDetail", { id: habit.id })}
+            >
               <Text style={{ color: colors.text, fontWeight: "700" }}>
                 {habit.nome} {habit.is_archived ? "(arquivado)" : ""}
               </Text>
@@ -125,7 +129,6 @@ const styles = StyleSheet.create({
   item: {
     gap: 6,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(148,163,184,0.3)",
     marginBottom: 8,
     paddingBottom: 8
   },

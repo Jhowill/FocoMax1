@@ -26,8 +26,8 @@ export function TaskDetailScreen({ route, navigation }: Props) {
   const [error, setError] = useState("");
   const [task, setTask] = useState<Awaited<ReturnType<typeof getTaskById>>>();
   const [subtasks, setSubtasks] = useState<Awaited<ReturnType<typeof listTaskSubtasks>>>([]);
-  const [sessions, setSessions] = useState<Array<{ id: string; status: string; started_at: string; duracao_real_segundos: number }>>([]);
-  const [history, setHistory] = useState<Array<{ id: string; acao: string; created_at: string }>>([]);
+  const [sessions, setSessions] = useState<{ id: string; status: string; started_at: string; duracao_real_segundos: number }[]>([]);
+  const [history, setHistory] = useState<{ id: string; acao: string; created_at: string }[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -49,7 +49,7 @@ export function TaskDetailScreen({ route, navigation }: Props) {
       setSessions(sessionData);
       setHistory(historyData);
       setError("");
-    } catch (err) {
+    } catch {
       setError("Falha ao carregar detalhes da tarefa.");
     } finally {
       setLoading(false);

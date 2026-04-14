@@ -27,7 +27,7 @@ export function FocusSummaryScreen({ route }: Props) {
       setSession(sessionData);
       setInterruptions(interruptionData);
       setError("");
-    } catch (err) {
+    } catch {
       setError("Falha ao carregar resumo da sessão.");
     } finally {
       setLoading(false);

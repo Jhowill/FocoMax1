@@ -2,13 +2,14 @@ import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+import { AdBanner } from "@/components/common/AdBanner";
 import { AppButton } from "@/components/common/AppButton";
 import { AppCard } from "@/components/common/AppCard";
-import { AdBanner } from "@/components/common/AdBanner";
 import { EmptyState, ErrorState, LoadingState } from "@/components/common/StateViews";
 import { useRootNavigation } from "@/navigation/hooks";
 import { getBehaviorInsights, getProgressOverview } from "@/services/progressService";
 import { useTheme } from "@/theme/ThemeProvider";
+import { typography } from "@/theme/typography";
 import { formatDuration } from "@/utils/date";
 
 export function ProgressHomeScreen() {
@@ -26,7 +27,7 @@ export function ProgressHomeScreen() {
       setOverview(summary);
       setInsights(behavior);
       setError("");
-    } catch (err) {
+    } catch {
       setError("Erro ao carregar progresso.");
     } finally {
       setLoading(false);
@@ -50,41 +51,41 @@ export function ProgressHomeScreen() {
 
   return (
     <View style={styles.container}>
-      <AppCard>
+      <AppCard tone="premium">
         <Text style={[styles.title, { color: colors.text }]}>Painel de progresso</Text>
         {latest ? (
           <>
-            <Text style={{ color: colors.text }}>Foco hoje: {formatDuration(latest.foco_min ?? 0)}</Text>
-            <Text style={{ color: colors.text }}>Sessões concluídas: {latest.sessoes_concluidas ?? 0}</Text>
-            <Text style={{ color: colors.text }}>Tarefas concluídas: {latest.tarefas_concluidas ?? 0}</Text>
-            <Text style={{ color: colors.text }}>Hábitos concluídos: {latest.habitos_concluidos ?? 0}</Text>
+            <Text style={[styles.body, { color: colors.text }]}>Foco hoje: {formatDuration(latest.foco_min ?? 0)}</Text>
+            <Text style={[styles.body, { color: colors.text }]}>Sessoes concluidas: {latest.sessoes_concluidas ?? 0}</Text>
+            <Text style={[styles.body, { color: colors.text }]}>Tarefas concluidas: {latest.tarefas_concluidas ?? 0}</Text>
+            <Text style={[styles.body, { color: colors.text }]}>Habitos concluidos: {latest.habitos_concluidos ?? 0}</Text>
           </>
         ) : (
-          <EmptyState title="Sem histórico" description="Complete sessões e tarefas para gerar análise." />
+          <EmptyState title="Sem historico" description="Complete sessoes e tarefas para gerar analise." />
         )}
       </AppCard>
 
       <AppCard>
-        <Text style={[styles.title, { color: colors.text }]}>Subabas de análise</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Subabas de analise</Text>
         <View style={styles.actions}>
           <AppButton title="Resumo" onPress={() => navigation.navigate("ProgressOverview")} />
           <AppButton title="Foco" onPress={() => navigation.navigate("ProgressFocus")} variant="secondary" />
           <AppButton title="Tarefas" onPress={() => navigation.navigate("ProgressTasks")} variant="secondary" />
-          <AppButton title="Hábitos" onPress={() => navigation.navigate("ProgressHabits")} variant="secondary" />
+          <AppButton title="Habitos" onPress={() => navigation.navigate("ProgressHabits")} variant="secondary" />
           <AppButton title="Comportamento" onPress={() => navigation.navigate("ProgressBehavior")} variant="secondary" />
         </View>
       </AppCard>
 
-      <AppCard>
+      <AppCard tone="soft">
         <Text style={[styles.title, { color: colors.text }]}>Destaques de comportamento</Text>
         {insights?.topDistractions?.length ? (
           insights.topDistractions.slice(0, 3).map((item) => (
-            <Text key={item.motivo} style={{ color: colors.text }}>
-              • {item.motivo}: {item.total} ocorrências
+            <Text key={item.motivo} style={[styles.body, { color: colors.text }]}>
+              - {item.motivo}: {item.total} ocorrencias
             </Text>
           ))
         ) : (
-          <Text style={{ color: colors.mutedText }}>Sem distrações registradas ainda.</Text>
+          <Text style={[styles.body, { color: colors.mutedText }]}>Sem distracoes registradas ainda.</Text>
         )}
       </AppCard>
 
@@ -96,14 +97,16 @@ export function ProgressHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 12,
-    paddingBottom: 16
+    gap: 16,
+    paddingBottom: 20
   },
   title: {
-    fontSize: 16,
-    fontWeight: "800"
+    ...typography.h4
+  },
+  body: {
+    ...typography.body
   },
   actions: {
-    gap: 8
+    gap: 10
   }
 });

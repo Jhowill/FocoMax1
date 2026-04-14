@@ -3,6 +3,8 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { useTheme } from "@/theme/ThemeProvider";
 import { spacing } from "@/theme/spacing";
+import { elevation, radius } from "@/theme/shape";
+import { typography } from "@/theme/typography";
 import { formatClock } from "@/utils/date";
 
 export function TimerDisplay({
@@ -16,31 +18,33 @@ export function TimerDisplay({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.container, { borderColor: colors.border, backgroundColor: colors.card }]}>
+    <View style={[styles.container, { borderColor: colors.border, backgroundColor: colors.cardSecondary }]}>
       <Text style={[styles.label, { color: colors.mutedText }]}>{label}</Text>
       <Text style={[styles.timer, { color: colors.text }]}>{formatClock(seconds)}</Text>
-      <Text style={[styles.meta, { color: colors.mutedText }]}>Interrupções: {interruptions}</Text>
+      <Text style={[styles.meta, { color: colors.mutedText }]}>Interrupcoes: {interruptions}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderWidth: 1,
-    borderRadius: 20,
+    borderWidth: 1.2,
+    borderRadius: radius.xl,
     paddingVertical: spacing.xl,
     alignItems: "center",
-    gap: spacing.xs
+    gap: spacing.sm,
+    ...elevation.md
   },
   label: {
-    fontSize: 14
+    ...typography.overline,
+    textAlign: "center"
   },
   timer: {
-    fontSize: 52,
+    fontSize: 58,
     fontWeight: "800",
-    letterSpacing: 1
+    letterSpacing: 2
   },
   meta: {
-    fontSize: 12
+    ...typography.caption
   }
 });

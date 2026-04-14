@@ -6,13 +6,17 @@ import { AdBanner } from "@/components/common/AdBanner";
 import { AppButton } from "@/components/common/AppButton";
 import { AppCard } from "@/components/common/AppCard";
 import { AppInput } from "@/components/common/AppInput";
+import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/common/StateViews";
 import { useRootNavigation } from "@/navigation/hooks";
-import { getTodayMoodEnergy, saveMoodEnergy } from "@/services/focusService";
-import { getTodayDashboard } from "@/services/progressService";
+import { getRecoverableFocusSession, getTodayMoodEnergy, saveMoodEnergy } from "@/services/focusService";
+import { getAdaptiveDailyFocusGoal, getConsistencyAlerts, getTodayDashboard } from "@/services/progressService";
+import { replanOverdueTasks } from "@/services/taskService";
 import { useAppContext } from "@/state/AppContext";
 import { useTheme } from "@/theme/ThemeProvider";
-import { formatDuration } from "@/utils/date";
+import { radius } from "@/theme/shape";
+import { typography } from "@/theme/typography";
+import { formatDuration, getGreetingByHour } from "@/utils/date";
 
 export function TodayScreen() {
   const navigation = useRootNavigation();
@@ -22,6 +26,9 @@ export function TodayScreen() {
   const [error, setError] = useState("");
   const [dashboard, setDashboard] = useState<Awaited<ReturnType<typeof getTodayDashboard>>>();
   const [mood, setMood] = useState<Awaited<ReturnType<typeof getTodayMoodEnergy>>>();
+  const [recoverable, setRecoverable] = useState<Awaited<ReturnType<typeof getRecoverableFocusSession>>>();
+  const [adaptiveGoal, setAdaptiveGoal] = useState<Awaited<ReturnType<typeof getAdaptiveDailyFocusGoal>>>();
+  const [consistencyAlerts, setConsistencyAlerts] = useState<string[]>([]);
 
   const [showMoodForm, setShowMoodForm] = useState(false);
   const [humor, setHumor] = useState("3");
@@ -32,11 +39,20 @@ export function TodayScreen() {
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [summary, moodEntry] = await Promise.all([getTodayDashboard(), getTodayMoodEnergy()]);
+      const [summary, moodEntry, recoverableSession, adaptive, alerts] = await Promise.all([
+        getTodayDashboard(),
+        getTodayMoodEnergy(),
+        getRecoverableFocusSession(),
+        getAdaptiveDailyFocusGoal(),
+        getConsistencyAlerts()
+      ]);
       setDashboard(summary);
       setMood(moodEntry);
+      setRecoverable(recoverableSession);
+      setAdaptiveGoal(adaptive);
+      setConsistencyAlerts(alerts);
       setError("");
-    } catch (err) {
+    } catch {
       setError("Nao foi possivel carregar seus dados de hoje.");
     } finally {
       setLoading(false);
@@ -69,13 +85,24 @@ export function TodayScreen() {
   }
 
   const firstName = userName.split(" ")[0] || "Voce";
+  const greeting = getGreetingByHour();
 
   return (
     <View style={styles.container}>
-      <AppCard>
-        <Text style={[styles.greeting, { color: colors.text }]}>Bom dia, {firstName}</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedText }]}>Seu painel simples para manter foco e rotina.</Text>
+      <PageHeader
+        title={`${greeting}, ${firstName}`}
+        subtitle="Seu centro de comando para foco, disciplina e consistencia."
+        right={
+          <AppButton
+            title="Foco rapido"
+            onPress={() => navigation.navigate("FocusSession", { fromQuickStart: true, quickDurationMin: 25 })}
+            variant="secondary"
+          />
+        }
+      />
 
+      <AppCard tone="premium">
+        <Text style={[styles.cardTitle, { color: colors.text }]}>Resumo do dia</Text>
         <View style={styles.statsGrid}>
           <View style={[styles.statItem, { backgroundColor: colors.cardSecondary }]}>
             <Text style={[styles.statLabel, { color: colors.mutedText }]}>Foco hoje</Text>
@@ -90,13 +117,68 @@ export function TodayScreen() {
             <Text style={[styles.statValue, { color: colors.text }]}>{dashboard.streakAtual} dias</Text>
           </View>
         </View>
+        {adaptiveGoal ? (
+          <Text style={[styles.helper, { color: colors.mutedText }]}>
+            Meta adaptativa: {adaptiveGoal.suggestedMinutes} min (base {adaptiveGoal.baselineMinutes} min, confianca {adaptiveGoal.confidence}).
+          </Text>
+        ) : null}
       </AppCard>
 
       <AppCard>
         <Text style={[styles.cardTitle, { color: colors.text }]}>Acoes rapidas</Text>
         <View style={styles.actions}>
           <AppButton title="Comecar foco agora" onPress={() => navigation.navigate("FocusSession", { fromQuickStart: true })} />
+          <View style={styles.quickFocusRow}>
+            <AppButton title="Foco 15m" onPress={() => navigation.navigate("FocusSession", { fromQuickStart: true, quickDurationMin: 15 })} variant="secondary" style={styles.quickFocusButton} />
+            <AppButton title="Foco 25m" onPress={() => navigation.navigate("FocusSession", { fromQuickStart: true, quickDurationMin: 25 })} variant="secondary" style={styles.quickFocusButton} />
+            <AppButton title="Foco 50m" onPress={() => navigation.navigate("FocusSession", { fromQuickStart: true, quickDurationMin: 50 })} variant="secondary" style={styles.quickFocusButton} />
+          </View>
           <AppButton title="Adicionar tarefa" onPress={() => navigation.navigate("TaskNew")} variant="secondary" />
+          <AppButton
+            title="Check-in rapido (1 toque)"
+            onPress={async () => {
+              try {
+                await saveMoodEnergy({
+                  humor: 3,
+                  energia: 3,
+                  dificuldadeFoco: 3
+                });
+                await load();
+                Alert.alert("Check-in registrado", "Humor, energia e foco salvos com valores neutros.");
+              } catch {
+                Alert.alert("Falha no check-in", "Nao foi possivel salvar o check-in rapido.");
+              }
+            }}
+            variant="secondary"
+          />
+          {!!dashboard.overdueTasks ? (
+            <AppButton
+              title="Replanejar atrasadas (amanha)"
+              onPress={async () => {
+                try {
+                  const result = await replanOverdueTasks(1, 3);
+                  await load();
+                  Alert.alert("Replanejamento aplicado", `${result.moved} tarefa(s) movidas para ${result.targetDate}.`);
+                } catch {
+                  Alert.alert("Falha no replanejamento", "Nao foi possivel replanejar as tarefas atrasadas.");
+                }
+              }}
+              variant="secondary"
+            />
+          ) : null}
+          {recoverable?.id ? (
+            <AppButton
+              title="Retomar ultima sessao interrompida"
+              onPress={() =>
+                navigation.navigate("FocusSession", {
+                  taskId: recoverable.tarefa_id ?? undefined,
+                  fromQuickStart: true,
+                  quickDurationMin: recoverable.duracao_planejada_min
+                })
+              }
+              variant="secondary"
+            />
+          ) : null}
           <AppButton
             title={showMoodForm ? "Fechar formulario de humor" : "Registrar humor e energia"}
             onPress={() => setShowMoodForm((prev) => !prev)}
@@ -125,7 +207,7 @@ export function TodayScreen() {
                 });
                 await load();
                 setShowMoodForm(false);
-              } catch (saveError) {
+              } catch {
                 Alert.alert("Falha ao salvar", "Nao foi possivel salvar humor e energia agora.");
               }
             }}
@@ -134,17 +216,43 @@ export function TodayScreen() {
       ) : null}
 
       <AppCard>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>Tarefas pendentes</Text>
-        {dashboard.pendingTasks.length === 0 ? (
+        <Text style={[styles.cardTitle, { color: colors.text }]}>3 prioridades do dia</Text>
+        {!!dashboard.overdueTasks ? (
+          <Text style={[styles.helper, { color: colors.warning }]}>
+            {dashboard.overdueTasks} tarefa(s) atrasada(s). Replaneje a mais importante.
+          </Text>
+        ) : null}
+        {dashboard.topPriorities.length === 0 ? (
           <Text style={[styles.helper, { color: colors.mutedText }]}>Sem pendencias no momento. Continue assim.</Text>
         ) : (
-          dashboard.pendingTasks.map((task) => (
+          dashboard.topPriorities.map((task) => (
             <Text key={task.id} style={[styles.listItem, { color: colors.text }]}>
-              • {task.titulo}
+              - {task.titulo}
             </Text>
           ))
         )}
       </AppCard>
+
+      <AppCard tone="soft">
+        <Text style={[styles.cardTitle, { color: colors.text }]}>Sugestao inteligente de hoje</Text>
+        <Text style={[styles.helper, { color: colors.text }]}>{dashboard.coachHint}</Text>
+        {dashboard.bestFocusHour ? (
+          <Text style={[styles.helper, { color: colors.mutedText }]}>
+            Janela sugerida: {dashboard.bestFocusHour}:00 a {dashboard.bestFocusHour}:59
+          </Text>
+        ) : null}
+      </AppCard>
+
+      {consistencyAlerts.length > 0 ? (
+        <AppCard>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>Alertas preventivos</Text>
+          {consistencyAlerts.map((alert) => (
+            <Text key={alert} style={[styles.helper, { color: colors.warning }]}>
+              - {alert}
+            </Text>
+          ))}
+        </AppCard>
+      ) : null}
 
       <AppCard>
         <Text style={[styles.cardTitle, { color: colors.text }]}>Habitos de hoje</Text>
@@ -153,7 +261,7 @@ export function TodayScreen() {
         ) : (
           dashboard.habits.map((habit) => (
             <Text key={habit.id} style={[styles.listItem, { color: colors.text }]}>
-              • {habit.nome}
+              - {habit.nome}
             </Text>
           ))
         )}
@@ -178,46 +286,45 @@ export function TodayScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: 12,
-    paddingBottom: 12
-  },
-  greeting: {
-    fontSize: 30,
-    fontWeight: "900"
-  },
-  subtitle: {
-    fontSize: 15
+    gap: 16,
+    paddingBottom: 20
   },
   cardTitle: {
-    fontSize: 17,
-    fontWeight: "800"
+    ...typography.h4
   },
   statsGrid: {
     flexDirection: "row",
-    gap: 8
+    gap: 10,
+    flexWrap: "wrap"
   },
   statItem: {
-    flex: 1,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 2
+    minWidth: "30%",
+    flexGrow: 1,
+    borderRadius: radius.lg,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 4
   },
   statLabel: {
-    fontSize: 12,
-    fontWeight: "600"
+    ...typography.caption
   },
   statValue: {
-    fontSize: 16,
-    fontWeight: "800"
+    ...typography.h3
   },
   actions: {
+    gap: 12
+  },
+  quickFocusRow: {
+    flexDirection: "row",
     gap: 10
   },
+  quickFocusButton: {
+    flex: 1
+  },
   listItem: {
-    fontSize: 14
+    ...typography.body
   },
   helper: {
-    fontSize: 14
+    ...typography.body
   }
 });

@@ -1,6 +1,6 @@
 import { getAll, getCurrentUserId, getFirst, insert, run, updateById } from "@/db/database";
 import { Suggestion } from "@/models/types";
-import { nowIso } from "@/utils/date";
+import { nowIso, toDateKey } from "@/utils/date";
 import { uid } from "@/utils/id";
 
 export async function listCoachSuggestions() {
@@ -35,7 +35,7 @@ export async function regenerateSuggestions() {
   await run("DELETE FROM sugestoes_coach WHERE usuario_id = ?", [userId]);
 
   const now = nowIso();
-  const suggestions: Array<{ tipo: string; texto: string }> = [];
+  const suggestions: { tipo: string; texto: string }[] = [];
 
   const bestHour = await getFirst<{ hora: string; media_foco: number }>(
     `
@@ -132,4 +132,87 @@ export async function regenerateSuggestions() {
   }
 
   return listCoachSuggestions();
+}
+
+export async function generateAdvancedWeeklyPlan() {
+  const userId = await getCurrentUserId();
+  const [criticalTasks, habits, bestHour, recentStats] = await Promise.all([
+    getAll<{ titulo: string; prioridade: number }>(
+      `
+      SELECT titulo, prioridade
+      FROM tarefas
+      WHERE usuario_id = ?
+        AND is_archived = 0
+        AND status <> 'concluida'
+      ORDER BY prioridade DESC, date(data_prevista) ASC
+      LIMIT 7
+      `,
+      [userId]
+    ),
+    getAll<{ nome: string; melhor_horario?: string | null }>(
+      `
+      SELECT nome, melhor_horario
+      FROM habitos
+      WHERE usuario_id = ?
+        AND ativo = 1
+        AND is_archived = 0
+      ORDER BY created_at DESC
+      LIMIT 7
+      `,
+      [userId]
+    ),
+    getFirst<{ hora: string }>(
+      `
+      SELECT strftime('%H', started_at) as hora
+      FROM sessoes_foco
+      WHERE usuario_id = ?
+        AND status = 'concluida'
+      GROUP BY strftime('%H', started_at)
+      ORDER BY AVG(COALESCE(foco_nivel, 3)) DESC, COUNT(*) DESC
+      LIMIT 1
+      `,
+      [userId]
+    ),
+    getAll<{ foco_min: number }>(
+      `
+      SELECT foco_min
+      FROM estatisticas_diarias
+      WHERE usuario_id = ?
+      ORDER BY data_ref DESC
+      LIMIT 7
+      `,
+      [userId]
+    )
+  ]);
+
+  const baseFocus = Math.max(
+    25,
+    Math.round(recentStats.reduce((sum, row) => sum + (row.foco_min ?? 0), 0) / Math.max(recentStats.length, 1))
+  );
+  const bestWindow = bestHour?.hora ? `${bestHour.hora}:00 - ${bestHour.hora}:59` : "08:00 - 10:00";
+
+  const days = Array.from({ length: 7 }).map((_, index) => {
+    const date = new Date(Date.now() + index * 86400000);
+    const dateRef = toDateKey(date);
+    const task = criticalTasks[index % Math.max(criticalTasks.length, 1)];
+    const habit = habits[index % Math.max(habits.length, 1)];
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    const focusTarget = Math.max(20, baseFocus + (isWeekend ? -10 : 5));
+
+    return {
+      dateRef,
+      focusTarget,
+      priorityTask: task?.titulo ?? "Revisar backlog e definir prioridade do dia",
+      habitFocus: habit?.nome ?? "Habito principal do dia",
+      suggestedWindow: habit?.melhor_horario || bestWindow
+    };
+  });
+
+  return {
+    generatedAt: nowIso(),
+    headline: "Plano semanal personalizado gerado por comportamento local",
+    focusBaseline: baseFocus,
+    bestWindow,
+    days
+  };
 }

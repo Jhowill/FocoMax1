@@ -15,7 +15,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "HabitNew">;
 export function HabitNewScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<Array<{ id: string; nome: string }>>([]);
+  const [categories, setCategories] = useState<{ id: string; nome: string }[]>([]);
 
   useEffect(() => {
     listCategories("habito")

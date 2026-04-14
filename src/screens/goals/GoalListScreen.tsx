@@ -22,7 +22,7 @@ export function GoalListScreen() {
       setLoading(true);
       setGoals(await listGoals(includeArchived));
       setError("");
-    } catch (err) {
+    } catch {
       setError("Erro ao carregar metas.");
     } finally {
       setLoading(false);
@@ -59,7 +59,11 @@ export function GoalListScreen() {
       ) : (
         <AppCard>
           {goals.map((goal) => (
-            <Pressable key={goal.id} style={styles.item} onPress={() => navigation.navigate("GoalDetail", { id: goal.id })}>
+            <Pressable
+              key={goal.id}
+              style={[styles.item, { borderBottomColor: colors.border }]}
+              onPress={() => navigation.navigate("GoalDetail", { id: goal.id })}
+            >
               <Text style={{ color: colors.text, fontWeight: "700" }}>
                 {goal.titulo} {goal.is_archived ? "(arquivada)" : ""}
               </Text>
@@ -95,7 +99,6 @@ const styles = StyleSheet.create({
   },
   item: {
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(148,163,184,0.3)",
     paddingBottom: 8,
     marginBottom: 8,
     gap: 2

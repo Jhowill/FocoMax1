@@ -28,9 +28,9 @@ export function TaskEditScreen({ route, navigation }: Props) {
   const { id } = route.params;
   const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<Array<{ id: string; nome: string }>>([]);
-  const [goals, setGoals] = useState<Array<{ id: string; titulo: string }>>([]);
-  const [areas, setAreas] = useState<Array<{ id: string; nome: string }>>([]);
+  const [categories, setCategories] = useState<{ id: string; nome: string }[]>([]);
+  const [goals, setGoals] = useState<{ id: string; titulo: string }[]>([]);
+  const [areas, setAreas] = useState<{ id: string; nome: string }[]>([]);
   const [initial, setInitial] = useState<any>();
 
   useEffect(() => {

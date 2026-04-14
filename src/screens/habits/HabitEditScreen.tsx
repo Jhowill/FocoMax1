@@ -17,7 +17,7 @@ export function HabitEditScreen({ route, navigation }: Props) {
   const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
   const [initial, setInitial] = useState<any>();
-  const [categories, setCategories] = useState<Array<{ id: string; nome: string }>>([]);
+  const [categories, setCategories] = useState<{ id: string; nome: string }[]>([]);
 
   useEffect(() => {
     Promise.all([getHabitById(id), listCategories("habito")])

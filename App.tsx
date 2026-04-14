@@ -4,7 +4,6 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from "@react-navigation/
 import React from "react";
 import { StatusBar } from "expo-status-bar";
 
-import { linking } from "@/app/linking";
 import { RootNavigator } from "@/navigation/RootNavigator";
 import { OnboardingProvider } from "@/state/OnboardingContext";
 import { AppProvider } from "@/state/AppContext";
@@ -39,7 +38,7 @@ function AppNavigation() {
   return (
     <>
       <StatusBar style={isDark ? "light" : "dark"} />
-      <NavigationContainer linking={linking} theme={navTheme}>
+      <NavigationContainer theme={navTheme}>
         <RootNavigator />
       </NavigationContainer>
     </>

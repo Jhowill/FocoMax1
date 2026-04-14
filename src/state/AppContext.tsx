@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { initDatabase } from "@/db/database";
 import { PremiumState } from "@/models/types";
+import { runAutoBackupIfNeeded } from "@/services/backupService";
 import { getPremiumState } from "@/services/monetizationService";
 import { getLocalUser } from "@/services/userService";
 
@@ -46,6 +47,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       await Promise.race([
         (async () => {
           await initDatabase();
+          void runAutoBackupIfNeeded().catch(() => undefined);
           const [user, premiumState] = await Promise.all([getLocalUser(), getPremiumState()]);
           setUserName(user?.nome ?? "Usuario");
           setOnboardingDone(Boolean(user?.onboarding_concluido));
@@ -57,7 +59,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setTimeout(() => reject(new Error("bootstrap-timeout")), 9000);
         })
       ]);
-    } catch (err) {
+    } catch {
       setError("Nao foi possivel carregar seus dados locais.");
     } finally {
       setLoading(false);

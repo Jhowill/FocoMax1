@@ -9,7 +9,7 @@ import { spacing } from "@/theme/spacing";
 
 interface Props {
   initial?: Partial<GoalInput>;
-  areas?: Array<{ id: string; nome: string }>;
+  areas?: { id: string; nome: string }[];
   onSubmit: (input: GoalInput) => Promise<void>;
   submitLabel?: string;
 }
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   },
   pill: {
     borderWidth: 1,
-    borderRadius: 999,
+    borderRadius: 10,
     minHeight: 32,
     paddingHorizontal: spacing.sm,
     alignItems: "center",
